@@ -14,7 +14,223 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      categorias: {
+        Row: {
+          created_at: string
+          id: string
+          nombre: string
+          orden: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nombre: string
+          orden?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nombre?: string
+          orden?: number
+        }
+        Relationships: []
+      }
+      clientes: {
+        Row: {
+          created_at: string
+          direccion: string | null
+          id: string
+          nombre: string
+          notas: string | null
+          telefono: string
+        }
+        Insert: {
+          created_at?: string
+          direccion?: string | null
+          id?: string
+          nombre: string
+          notas?: string | null
+          telefono: string
+        }
+        Update: {
+          created_at?: string
+          direccion?: string | null
+          id?: string
+          nombre?: string
+          notas?: string | null
+          telefono?: string
+        }
+        Relationships: []
+      }
+      extras: {
+        Row: {
+          activo: boolean
+          created_at: string
+          id: string
+          nombre: string
+          precio: number
+        }
+        Insert: {
+          activo?: boolean
+          created_at?: string
+          id?: string
+          nombre: string
+          precio?: number
+        }
+        Update: {
+          activo?: boolean
+          created_at?: string
+          id?: string
+          nombre?: string
+          precio?: number
+        }
+        Relationships: []
+      }
+      items_pedido: {
+        Row: {
+          cantidad: number
+          created_at: string
+          id: string
+          modificaciones: Json
+          nombre: string
+          pedido_id: string
+          precio_unitario: number
+          producto_id: string | null
+        }
+        Insert: {
+          cantidad?: number
+          created_at?: string
+          id?: string
+          modificaciones?: Json
+          nombre: string
+          pedido_id: string
+          precio_unitario?: number
+          producto_id?: string | null
+        }
+        Update: {
+          cantidad?: number
+          created_at?: string
+          id?: string
+          modificaciones?: Json
+          nombre?: string
+          pedido_id?: string
+          precio_unitario?: number
+          producto_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "items_pedido_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "items_pedido_producto_id_fkey"
+            columns: ["producto_id"]
+            isOneToOne: false
+            referencedRelation: "productos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pedidos: {
+        Row: {
+          cambio: number | null
+          cliente_id: string | null
+          created_at: string
+          estado: string
+          id: string
+          metodo_pago: string | null
+          notas: string | null
+          numero: number
+          recibido: number | null
+          subtotal: number
+          tipo: string
+          total: number
+        }
+        Insert: {
+          cambio?: number | null
+          cliente_id?: string | null
+          created_at?: string
+          estado?: string
+          id?: string
+          metodo_pago?: string | null
+          notas?: string | null
+          numero?: number
+          recibido?: number | null
+          subtotal?: number
+          tipo?: string
+          total?: number
+        }
+        Update: {
+          cambio?: number | null
+          cliente_id?: string | null
+          created_at?: string
+          estado?: string
+          id?: string
+          metodo_pago?: string | null
+          notas?: string | null
+          numero?: number
+          recibido?: number | null
+          subtotal?: number
+          tipo?: string
+          total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pedidos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      productos: {
+        Row: {
+          activo: boolean
+          categoria_id: string | null
+          created_at: string
+          descripcion: string | null
+          id: string
+          ingredientes: Json
+          nombre: string
+          orden: number
+          precio: number
+        }
+        Insert: {
+          activo?: boolean
+          categoria_id?: string | null
+          created_at?: string
+          descripcion?: string | null
+          id?: string
+          ingredientes?: Json
+          nombre: string
+          orden?: number
+          precio?: number
+        }
+        Update: {
+          activo?: boolean
+          categoria_id?: string | null
+          created_at?: string
+          descripcion?: string | null
+          id?: string
+          ingredientes?: Json
+          nombre?: string
+          orden?: number
+          precio?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "productos_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "categorias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
