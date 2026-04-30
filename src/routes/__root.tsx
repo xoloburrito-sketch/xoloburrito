@@ -30,8 +30,16 @@ export const Route = createRootRoute({
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" },
-      { title: "POS Burritos" },
-      { name: "description", content: "Punto de venta táctil para tu negocio." },
+      { title: "XÖLO BURRITOS NORTEÑOS" },
+      { name: "description", content: "Solo con tu número repetimos tus pedidos anteriores y guardamos tu dirección. Menos espera, más burritos." },
+      { property: "og:title", content: "XÖLO BURRITOS NORTEÑOS" },
+      { name: "twitter:title", content: "XÖLO BURRITOS NORTEÑOS" },
+      { property: "og:description", content: "Solo con tu número repetimos tus pedidos anteriores y guardamos tu dirección. Menos espera, más burritos." },
+      { name: "twitter:description", content: "Solo con tu número repetimos tus pedidos anteriores y guardamos tu dirección. Menos espera, más burritos." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/e705a67f-5dad-427a-bc3b-001fff4457a1/id-preview-73e20036--e42d4642-2967-4eae-b890-c35b9050bd26.lovable.app-1777513958976.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/e705a67f-5dad-427a-bc3b-001fff4457a1/id-preview-73e20036--e42d4642-2967-4eae-b890-c35b9050bd26.lovable.app-1777513958976.png" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:type", content: "website" },
     ],
     links: [
       {
