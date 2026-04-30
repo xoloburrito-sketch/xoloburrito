@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { eur, fechaCorta } from "@/lib/format";
 import {
   ChevronRight, Banknote, CreditCard, Bike, Home,
-  Trash2, Plus, Minus, Pencil, X, Save,
+  Trash2, Plus, Minus, Pencil, X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ModificadorDialog } from "@/components/ModificadorDialog";
