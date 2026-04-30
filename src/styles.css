@@ -95,22 +95,87 @@
   }
 }
 
+@page {
+  size: 80mm auto;
+  margin: 0;
+}
+
 @media print {
+  html, body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+  }
   body * { visibility: hidden; }
   .ticket-print, .ticket-print * { visibility: visible; }
   .ticket-print {
-    position: absolute; left: 0; top: 0; width: 80mm;
-    color: black; background: white;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 72mm;
+    margin: 0;
+    padding: 3mm 4mm;
+    color: #000 !important;
+    background: #fff !important;
+    font-family: 'Consolas', 'Lucida Console', 'Courier New', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.35;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .ticket-print * {
+    color: #000 !important;
+    background: transparent !important;
   }
   .no-print { display: none !important; }
 }
 
 .ticket-print {
-  font-family: 'Courier New', monospace;
-  font-size: 12px;
-  line-height: 1.4;
-  color: black;
-  background: white;
-  padding: 8px;
+  font-family: 'Consolas', 'Lucida Console', 'Courier New', monospace;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: #000;
+  background: #fff;
+  padding: 10px 12px;
   width: 80mm;
+  letter-spacing: 0.01em;
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.ticket-print .ticket-title {
+  font-size: 18px;
+  font-weight: 900;
+  text-align: center;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+.ticket-print .ticket-sub {
+  text-align: center;
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+.ticket-print .ticket-sep {
+  border-top: 1px dashed #000;
+  margin: 6px 0;
+}
+.ticket-print .ticket-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.ticket-print .ticket-total {
+  font-size: 16px;
+  font-weight: 900;
+}
+.ticket-print .ticket-mod {
+  padding-left: 10px;
+  font-size: 11px;
+}
+.ticket-print .ticket-foot {
+  text-align: center;
+  margin-top: 10px;
+  font-size: 12px;
 }
