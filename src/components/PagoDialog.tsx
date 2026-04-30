@@ -111,9 +111,19 @@ export function PagoDialog({
 
   const descargar = () => {
     if (!ticketRef.current) return;
-    const html = `<!doctype html><html><head><meta charset="utf-8"><title>Ticket</title>
-<style>body{font-family:'Courier New',monospace;font-size:12px;padding:10px;width:80mm;color:#000}</style>
-</head><body>${ticketRef.current.innerHTML}</body></html>`;
+    const html = `<!doctype html><html><head><meta charset="utf-8"><title>Ticket #${pedidoOk?.numero ?? ""}</title>
+<style>
+@page { size: 80mm auto; margin: 0; }
+html,body{margin:0;padding:0;background:#fff;color:#000}
+body{font-family:'Consolas','Lucida Console','Courier New',monospace;font-size:13px;font-weight:600;line-height:1.35;width:72mm;padding:3mm 4mm;letter-spacing:.01em}
+.ticket-title{font-size:18px;font-weight:900;text-align:center;letter-spacing:.05em;margin-bottom:4px}
+.ticket-sub{text-align:center;font-size:12px;margin-bottom:6px}
+.ticket-sep{border-top:1px dashed #000;margin:6px 0}
+.ticket-row{display:flex;justify-content:space-between;gap:8px}
+.ticket-total{font-size:16px;font-weight:900}
+.ticket-mod{padding-left:10px;font-size:11px}
+.ticket-foot{text-align:center;margin-top:10px;font-size:12px}
+</style></head><body>${ticketRef.current.innerHTML}</body></html>`;
     const blob = new Blob([html], { type: "text/html" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
