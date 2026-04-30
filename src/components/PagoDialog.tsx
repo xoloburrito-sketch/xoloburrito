@@ -133,50 +133,50 @@ export function PagoDialog({
           </div>
           <div className="flex-1 overflow-y-auto bg-muted p-4">
             <div ref={ticketRef} className="ticket-print mx-auto rounded-xl">
-              <div style={{ textAlign: "center", fontWeight: "bold", fontSize: 14 }}>🌯 BURRITOS</div>
-              <div style={{ textAlign: "center", marginBottom: 8 }}>
+              <div className="ticket-title">XOLO BURRITO</div>
+              <div className="ticket-sub">
                 Pedido #{pedidoOk.numero}<br />
                 {new Date(pedidoOk.fecha).toLocaleString("es-ES")}
               </div>
-              <div>------------------------------</div>
-              <div>{estado.tipo === "domicilio" ? "🛵 DOMICILIO" : "🏪 LOCAL"}</div>
+              <div className="ticket-sep" />
+              <div style={{ fontWeight: 800 }}>{estado.tipo === "domicilio" ? "** DOMICILIO **" : "** LOCAL **"}</div>
               {estado.cliente_nombre && (
-                <div>
+                <div style={{ marginTop: 4 }}>
                   Cliente: {estado.cliente_nombre}<br />
                   Tel: {estado.cliente_telefono}
                   {estado.cliente_direccion && (<><br />Dir: {estado.cliente_direccion}</>)}
                 </div>
               )}
-              <div>------------------------------</div>
+              <div className="ticket-sep" />
               {estado.items.map((i) => (
-                <div key={i.uid} style={{ marginBottom: 4 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <div key={i.uid} style={{ marginBottom: 6 }}>
+                  <div className="ticket-row">
                     <span>{i.cantidad}x {i.nombre}</span>
                     <span>{eur(lineaTotal(i))}</span>
                   </div>
                   {i.modificaciones.quitar.map((q) => (
-                    <div key={q} style={{ paddingLeft: 10, fontSize: 10 }}>- sin {q}</div>
+                    <div key={q} className="ticket-mod">- sin {q}</div>
                   ))}
                   {i.modificaciones.extras.map((e) => (
-                    <div key={e.nombre} style={{ paddingLeft: 10, fontSize: 10 }}>+ {e.nombre} {e.precio > 0 ? eur(e.precio) : ""}</div>
+                    <div key={e.nombre} className="ticket-mod">+ {e.nombre} {e.precio > 0 ? eur(e.precio) : ""}</div>
                   ))}
-                  {i.modificaciones.notas && <div style={{ paddingLeft: 10, fontSize: 10, fontStyle: "italic" }}>* {i.modificaciones.notas}</div>}
+                  {i.modificaciones.notas && <div className="ticket-mod" style={{ fontStyle: "italic" }}>* {i.modificaciones.notas}</div>}
                 </div>
               ))}
-              <div>------------------------------</div>
-              <div style={{ display: "flex", justifyContent: "space-between", fontWeight: "bold", fontSize: 14 }}>
+              <div className="ticket-sep" />
+              <div className="ticket-row ticket-total">
                 <span>TOTAL</span><span>{eur(total)}</span>
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between" }}>
+              <div className="ticket-row">
                 <span>Pago ({metodo})</span>
                 <span>{metodo === "efectivo" ? eur(parseFloat(recibido.replace(",", "."))) : eur(total)}</span>
               </div>
               {metodo === "efectivo" && (
-                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <div className="ticket-row">
                   <span>Cambio</span><span>{eur(cambio)}</span>
                 </div>
               )}
-              <div style={{ textAlign: "center", marginTop: 10 }}>¡Gracias!</div>
+              <div className="ticket-foot">¡Gracias por su compra!</div>
             </div>
           </div>
           <div className="no-print grid grid-cols-3 gap-2 border-t border-border p-3">
