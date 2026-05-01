@@ -188,6 +188,15 @@ function PedidosPage() {
     cargarPedidos();
   };
 
+  const cambiarPrecio = async (item: Item, nuevo: number) => {
+    if (isNaN(nuevo) || nuevo < 0) { toast.error("Precio inválido"); return; }
+    await supabase.from("items_pedido").update({ precio_unitario: nuevo }).eq("id", item.id);
+    const next = items.map((i) => i.id === item.id ? { ...i, precio_unitario: nuevo } : i);
+    setItems(next);
+    if (sel) recalcularTotal(sel.id, next);
+    toast.success("Precio actualizado");
+  };
+
   const totalHoy = pedidos
     .filter((p) => new Date(p.created_at).toDateString() === new Date().toDateString())
     .reduce((s, p) => s + Number(p.total), 0);
