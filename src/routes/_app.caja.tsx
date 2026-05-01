@@ -197,6 +197,18 @@ function CajaPage() {
         </div>
 
         <div className="space-y-2 border-t border-border p-3">
+          {envio > 0 && (
+            <>
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground">Subtotal</span>
+                <span className="font-bold">{eur(totalProductos)}</span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground">Envío domicilio</span>
+                <span className="font-bold">{eur(envio)}</span>
+              </div>
+            </>
+          )}
           <div className="flex items-baseline justify-between">
             <span className="text-sm font-bold uppercase text-muted-foreground">Total</span>
             <span className="text-3xl font-black text-primary">{eur(total)}</span>
