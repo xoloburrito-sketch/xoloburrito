@@ -22,6 +22,7 @@ type Pedido = {
   metodo_pago: string | null;
   total: number;
   subtotal: number;
+  envio: number;
   recibido: number | null;
   cambio: number | null;
   notas: string | null;
@@ -100,9 +101,9 @@ function PedidosPage() {
   }, [sel, cargarItems]);
 
   const recalcularTotal = async (pedidoId: string, nuevosItems: Item[]) => {
-    const total = nuevosItems.reduce((s, i) => s + lineaTotal(i), 0);
-    await supabase.from("pedidos").update({ subtotal: total, total }).eq("id", pedidoId);
-    // refrescar pedido seleccionado
+    const subtotal = nuevosItems.reduce((s, i) => s + lineaTotal(i), 0);
+    const envio = sel?.tipo === "domicilio" ? 2.5 : 0;
+    await supabase.from("pedidos").update({ subtotal, envio, total: subtotal + envio }).eq("id", pedidoId);
     const { data } = await supabase
       .from("pedidos")
       .select("*, clientes(nombre, telefono)")
