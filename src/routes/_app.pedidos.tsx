@@ -170,14 +170,17 @@ function PedidosPage() {
     cargarPedidos();
   };
 
-  const cambiarTipo = async (tipo: "local" | "domicilio") => {
+  const cambiarTipo = async (tipo: "local" | "domicilio" | "glovo" | "just_eat") => {
     if (!sel) return;
-    await supabase.from("pedidos").update({ tipo }).eq("id", sel.id);
-    setSel({ ...sel, tipo });
+    const envio = tipo === "domicilio" ? 2.5 : 0;
+    const subtotal = items.reduce((s, i) => s + lineaTotal(i), 0);
+    await supabase.from("pedidos").update({ tipo, envio, total: subtotal + envio, subtotal }).eq("id", sel.id);
     cargarPedidos();
+    const { data } = await supabase.from("pedidos").select("*, clientes(nombre, telefono)").eq("id", sel.id).single();
+    if (data) setSel(data as unknown as Pedido);
   };
 
-  const cambiarMetodo = async (metodo: "efectivo" | "tarjeta") => {
+  const cambiarMetodo = async (metodo: "efectivo" | "tarjeta" | "glovo" | "just_eat") => {
     if (!sel) return;
     await supabase.from("pedidos").update({ metodo_pago: metodo }).eq("id", sel.id);
     setSel({ ...sel, metodo_pago: metodo });
