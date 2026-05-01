@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { Modificacion } from "@/lib/pos-store";
+import { useMemo, useRef, useState } from "react";
+import { Modificacion, PRECIO_ENVIO_DOMICILIO, TipoPedido } from "@/lib/pos-store";
 import { eur } from "@/lib/format";
-import { X, Printer, Calculator, Banknote, CreditCard } from "lucide-react";
+import { X, Printer, Calculator, Banknote, CreditCard, Bike } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -20,55 +20,59 @@ type Estado = {
   cliente_nombre: string | null;
   cliente_telefono: string | null;
   cliente_direccion: string | null;
-  tipo: "local" | "domicilio";
+  tipo: TipoPedido;
   notas: string;
 };
+
+type Metodo = "efectivo" | "tarjeta" | "glovo" | "just_eat";
 
 const lineaTotal = (i: Item) => {
   const ex = i.modificaciones.extras.reduce((s, e) => s + e.precio, 0);
   return (i.precio_unitario + ex) * i.cantidad;
 };
 
+const tipoLabel = (t: TipoPedido) =>
+  t === "local" ? "LOCAL" : t === "domicilio" ? "DOMICILIO" : t === "glovo" ? "GLOVO" : "JUST EAT";
+
 export function PagoDialog({
   estado,
-  total,
+  total: totalProductos,
   onClose,
   onPagado,
 }: {
   estado: Estado;
-  total: number;
+  total: number; // total de productos (sin envío)
   onClose: () => void;
   onPagado: () => void;
 }) {
-  const [metodo, setMetodo] = useState<"efectivo" | "tarjeta">("efectivo");
+  const envio = estado.tipo === "domicilio" ? PRECIO_ENVIO_DOMICILIO : 0;
+  const total = totalProductos + envio;
+
+  // Si es plataforma, método por defecto coincide
+  const metodoInicial: Metodo =
+    estado.tipo === "glovo" ? "glovo" : estado.tipo === "just_eat" ? "just_eat" : "efectivo";
+
+  const [metodo, setMetodo] = useState<Metodo>(metodoInicial);
   const [recibido, setRecibido] = useState<string>("");
   const [confirmando, setConfirmando] = useState(false);
   const [pedidoOk, setPedidoOk] = useState<{ numero: number; fecha: string } | null>(null);
   const ticketRef = useRef<HTMLDivElement>(null);
 
-  const cambio = useMemo(() => {
-    const r = parseFloat(recibido.replace(",", "."));
-    if (!isFinite(r)) return 0;
-    return Math.max(0, r - total);
-  }, [recibido, total]);
-
-  const sugerencias = useMemo(() => {
-    const base = Math.ceil(total);
-    return Array.from(new Set([base, base + 5, base + 10, 20, 50])).filter((v) => v >= total).slice(0, 5);
-  }, [total]);
+  const recibidoNum = parseFloat(recibido.replace(",", ".")) || 0;
+  const cambio = useMemo(() => Math.max(0, recibidoNum - total), [recibidoNum, total]);
 
   const tap = (d: string) => setRecibido((r) => (r + d).replace(/^0+(\d)/, "$1"));
   const back = () => setRecibido((r) => r.slice(0, -1));
   const punto = () => setRecibido((r) => (r.includes(".") ? r : (r || "0") + "."));
+  const limpiar = () => setRecibido("");
 
   const confirmar = async () => {
-    if (metodo === "efectivo" && (!recibido || parseFloat(recibido.replace(",", ".")) < total)) {
+    if (metodo === "efectivo" && recibidoNum < total) {
       toast.error("Importe recibido insuficiente");
       return;
     }
     setConfirmando(true);
     try {
-      const recibidoNum = metodo === "efectivo" ? parseFloat(recibido.replace(",", ".")) : total;
       const { data: pedido, error } = await supabase
         .from("pedidos")
         .insert({
@@ -76,9 +80,10 @@ export function PagoDialog({
           tipo: estado.tipo,
           estado: "pagado",
           metodo_pago: metodo,
-          subtotal: total,
-          total: total,
-          recibido: recibidoNum,
+          subtotal: totalProductos,
+          envio,
+          total,
+          recibido: metodo === "efectivo" ? recibidoNum : total,
           cambio: metodo === "efectivo" ? cambio : 0,
           notas: estado.notas || null,
         })
@@ -100,8 +105,7 @@ export function PagoDialog({
       setPedidoOk({ numero: pedido.numero, fecha: pedido.created_at });
       toast.success(`Pedido #${pedido.numero} cobrado`);
     } catch (e) {
-      const err = e as Error;
-      toast.error(err.message);
+      toast.error((e as Error).message);
     } finally {
       setConfirmando(false);
     }
@@ -133,7 +137,7 @@ body{font-family:'Consolas','Lucida Console','Courier New',monospace;font-size:1
     URL.revokeObjectURL(url);
   };
 
-  // Pantalla post-pago: ticket
+  // ===== Ticket post-pago =====
   if (pedidoOk) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-2 sm:p-4">
@@ -149,7 +153,7 @@ body{font-family:'Consolas','Lucida Console','Courier New',monospace;font-size:1
                 {new Date(pedidoOk.fecha).toLocaleString("es-ES")}
               </div>
               <div className="ticket-sep" />
-              <div style={{ fontWeight: 800 }}>{estado.tipo === "domicilio" ? "** DOMICILIO **" : "** LOCAL **"}</div>
+              <div style={{ fontWeight: 800 }}>** {tipoLabel(estado.tipo)} **</div>
               {estado.cliente_nombre && (
                 <div style={{ marginTop: 4 }}>
                   Cliente: {estado.cliente_nombre}<br />
@@ -174,12 +178,16 @@ body{font-family:'Consolas','Lucida Console','Courier New',monospace;font-size:1
                 </div>
               ))}
               <div className="ticket-sep" />
+              <div className="ticket-row"><span>Subtotal</span><span>{eur(totalProductos)}</span></div>
+              {envio > 0 && (
+                <div className="ticket-row"><span>Envío</span><span>{eur(envio)}</span></div>
+              )}
               <div className="ticket-row ticket-total">
                 <span>TOTAL</span><span>{eur(total)}</span>
               </div>
               <div className="ticket-row">
                 <span>Pago ({metodo})</span>
-                <span>{metodo === "efectivo" ? eur(parseFloat(recibido.replace(",", "."))) : eur(total)}</span>
+                <span>{eur(metodo === "efectivo" ? recibidoNum : total)}</span>
               </div>
               {metodo === "efectivo" && (
                 <div className="ticket-row">
@@ -205,6 +213,7 @@ body{font-family:'Consolas','Lucida Console','Courier New',monospace;font-size:1
     );
   }
 
+  // ===== Pantalla de cobro =====
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-2 sm:items-center sm:p-4" onClick={onClose}>
       <div className="flex max-h-[95vh] w-full max-w-2xl flex-col rounded-3xl bg-card shadow-2xl" onClick={(e) => e.stopPropagation()}>
@@ -219,66 +228,70 @@ body{font-family:'Consolas','Lucida Console','Courier New',monospace;font-size:1
           <div className="rounded-3xl bg-secondary p-6 text-center text-secondary-foreground">
             <div className="text-sm opacity-70">Total a cobrar</div>
             <div className="text-5xl font-black tracking-tight text-primary">{eur(total)}</div>
+            <div className="mt-1 text-xs opacity-80">
+              Productos {eur(totalProductos)}
+              {envio > 0 && <> · <Bike className="inline h-3 w-3" /> Envío {eur(envio)}</>}
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              onClick={() => setMetodo("efectivo")}
-              className={`flex items-center justify-center gap-2 rounded-2xl py-4 text-lg font-bold transition active:scale-95 ${
-                metodo === "efectivo" ? "bg-primary text-primary-foreground shadow-lg" : "bg-muted"
-              }`}
-            >
-              <Banknote className="h-6 w-6" /> Efectivo
-            </button>
-            <button
-              onClick={() => setMetodo("tarjeta")}
-              className={`flex items-center justify-center gap-2 rounded-2xl py-4 text-lg font-bold transition active:scale-95 ${
-                metodo === "tarjeta" ? "bg-primary text-primary-foreground shadow-lg" : "bg-muted"
-              }`}
-            >
-              <CreditCard className="h-6 w-6" /> Tarjeta
-            </button>
+          <div>
+            <div className="mb-2 text-xs font-bold uppercase text-muted-foreground">Método de pago</div>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {([
+                { k: "efectivo", label: "Efectivo", Icon: Banknote },
+                { k: "tarjeta", label: "Tarjeta", Icon: CreditCard },
+                { k: "glovo", label: "Glovo", Icon: Bike },
+                { k: "just_eat", label: "Just Eat", Icon: Bike },
+              ] as const).map(({ k, label, Icon }) => (
+                <button
+                  key={k}
+                  onClick={() => setMetodo(k)}
+                  className={`flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-bold transition active:scale-95 ${
+                    metodo === k ? "bg-primary text-primary-foreground shadow-lg" : "bg-muted"
+                  }`}
+                >
+                  <Icon className="h-5 w-5" /> {label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {metodo === "efectivo" ? (
             <>
               <div className="rounded-2xl bg-muted p-4">
-                <div className="text-xs font-bold uppercase text-muted-foreground">Recibido</div>
-                <div className="text-3xl font-black">{eur(parseFloat(recibido.replace(",", ".")) || 0)}</div>
+                <div className="flex items-center justify-between">
+                  <div className="text-xs font-bold uppercase text-muted-foreground">Recibido</div>
+                  <button onClick={limpiar} className="text-xs font-bold text-muted-foreground underline">Limpiar</button>
+                </div>
+                <div className="text-3xl font-black">{eur(recibidoNum)}</div>
                 <div className="mt-2 flex justify-between text-sm">
                   <span className="text-muted-foreground">Cambio</span>
                   <span className="text-2xl font-black text-success">{eur(cambio)}</span>
                 </div>
               </div>
 
-              <div className="flex flex-wrap gap-2">
-                {sugerencias.map((v) => (
-                  <button
-                    key={v}
-                    onClick={() => setRecibido(String(v))}
-                    className="rounded-full bg-accent px-4 py-2 font-bold text-accent-foreground active:scale-95"
-                  >
-                    {eur(v)}
-                  </button>
-                ))}
-              </div>
-
               <div className="grid grid-cols-3 gap-2">
                 {["1","2","3","4","5","6","7","8","9"].map((d) => (
-                  <button key={d} onClick={() => tap(d)} className="rounded-2xl bg-muted py-4 text-2xl font-bold active:scale-95 active:bg-primary active:text-primary-foreground">
+                  <button key={d} onClick={() => tap(d)} className="rounded-2xl bg-muted py-5 text-3xl font-bold active:scale-95 active:bg-primary active:text-primary-foreground">
                     {d}
                   </button>
                 ))}
-                <button onClick={punto} className="rounded-2xl bg-muted py-4 text-2xl font-bold active:scale-95">.</button>
-                <button onClick={() => tap("0")} className="rounded-2xl bg-muted py-4 text-2xl font-bold active:scale-95">0</button>
-                <button onClick={back} className="rounded-2xl bg-muted py-4 text-2xl font-bold active:scale-95 active:bg-destructive active:text-destructive-foreground">⌫</button>
+                <button onClick={punto} className="rounded-2xl bg-muted py-5 text-3xl font-bold active:scale-95">.</button>
+                <button onClick={() => tap("0")} className="rounded-2xl bg-muted py-5 text-3xl font-bold active:scale-95">0</button>
+                <button onClick={back} className="rounded-2xl bg-muted py-5 text-3xl font-bold active:scale-95 active:bg-destructive active:text-destructive-foreground">⌫</button>
               </div>
             </>
-          ) : (
+          ) : metodo === "tarjeta" ? (
             <div className="rounded-2xl bg-accent p-6 text-center">
               <CreditCard className="mx-auto h-12 w-12 text-primary" />
               <p className="mt-3 font-bold">Cobra con el datáfono</p>
               <p className="text-sm text-muted-foreground">Cuando termine, pulsa Confirmar</p>
+            </div>
+          ) : (
+            <div className="rounded-2xl bg-accent p-6 text-center">
+              <Bike className="mx-auto h-12 w-12 text-primary" />
+              <p className="mt-3 font-bold">Pedido pagado por {metodo === "glovo" ? "Glovo" : "Just Eat"}</p>
+              <p className="text-sm text-muted-foreground">Se registra como ingreso por plataforma</p>
             </div>
           )}
         </div>
@@ -289,7 +302,7 @@ body{font-family:'Consolas','Lucida Console','Courier New',monospace;font-size:1
             disabled={confirmando}
             className="w-full rounded-2xl bg-success py-5 text-xl font-black text-success-foreground shadow-lg transition active:scale-95 disabled:opacity-50"
           >
-            {confirmando ? "Procesando…" : `✓ Confirmar pago · ${eur(total)}`}
+            {confirmando ? "Procesando…" : `✓ Confirmar · ${eur(total)}`}
           </button>
         </div>
       </div>
