@@ -188,6 +188,15 @@ function PedidosPage() {
     cargarPedidos();
   };
 
+  const cambiarPrecio = async (item: Item, nuevo: number) => {
+    if (isNaN(nuevo) || nuevo < 0) { toast.error("Precio inválido"); return; }
+    await supabase.from("items_pedido").update({ precio_unitario: nuevo }).eq("id", item.id);
+    const next = items.map((i) => i.id === item.id ? { ...i, precio_unitario: nuevo } : i);
+    setItems(next);
+    if (sel) recalcularTotal(sel.id, next);
+    toast.success("Precio actualizado");
+  };
+
   const totalHoy = pedidos
     .filter((p) => new Date(p.created_at).toDateString() === new Date().toDateString())
     .reduce((s, p) => s + Number(p.total), 0);
@@ -316,7 +325,17 @@ function PedidosPage() {
                       ))}
                       {i.modificaciones?.notas && <div className="text-xs italic">"{i.modificaciones.notas}"</div>}
                     </div>
-                    <div className="text-right font-black text-primary">{eur(lineaTotal(i))}</div>
+                    <div className="text-right">
+                      <button
+                        onClick={() => {
+                          const v = prompt(`Precio unitario de "${i.nombre}" (€)`, String(i.precio_unitario));
+                          if (v == null) return;
+                          cambiarPrecio(i, parseFloat(v.replace(",", ".")));
+                        }}
+                        className="text-xs text-muted-foreground hover:text-foreground"
+                      >{eur(Number(i.precio_unitario))} <Pencil className="inline h-3 w-3" /></button>
+                      <div className="font-black text-primary">{eur(lineaTotal(i))}</div>
+                    </div>
                   </div>
                   <div className="mt-2 flex items-center gap-1">
                     <button onClick={() => cambiarCantidad(i, -1)} className="rounded-lg bg-muted p-2 active:scale-95"><Minus className="h-4 w-4" /></button>
