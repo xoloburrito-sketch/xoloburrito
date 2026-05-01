@@ -22,6 +22,7 @@ type Pedido = {
   metodo_pago: string | null;
   total: number;
   subtotal: number;
+  envio: number;
   recibido: number | null;
   cambio: number | null;
   notas: string | null;
@@ -100,9 +101,9 @@ function PedidosPage() {
   }, [sel, cargarItems]);
 
   const recalcularTotal = async (pedidoId: string, nuevosItems: Item[]) => {
-    const total = nuevosItems.reduce((s, i) => s + lineaTotal(i), 0);
-    await supabase.from("pedidos").update({ subtotal: total, total }).eq("id", pedidoId);
-    // refrescar pedido seleccionado
+    const subtotal = nuevosItems.reduce((s, i) => s + lineaTotal(i), 0);
+    const envio = sel?.tipo === "domicilio" ? 2.5 : 0;
+    await supabase.from("pedidos").update({ subtotal, envio, total: subtotal + envio }).eq("id", pedidoId);
     const { data } = await supabase
       .from("pedidos")
       .select("*, clientes(nombre, telefono)")
@@ -170,14 +171,17 @@ function PedidosPage() {
     cargarPedidos();
   };
 
-  const cambiarTipo = async (tipo: "local" | "domicilio") => {
+  const cambiarTipo = async (tipo: "local" | "domicilio" | "glovo" | "just_eat") => {
     if (!sel) return;
-    await supabase.from("pedidos").update({ tipo }).eq("id", sel.id);
-    setSel({ ...sel, tipo });
+    const envio = tipo === "domicilio" ? 2.5 : 0;
+    const subtotal = items.reduce((s, i) => s + lineaTotal(i), 0);
+    await supabase.from("pedidos").update({ tipo, envio, total: subtotal + envio, subtotal }).eq("id", sel.id);
     cargarPedidos();
+    const { data } = await supabase.from("pedidos").select("*, clientes(nombre, telefono)").eq("id", sel.id).single();
+    if (data) setSel(data as unknown as Pedido);
   };
 
-  const cambiarMetodo = async (metodo: "efectivo" | "tarjeta") => {
+  const cambiarMetodo = async (metodo: "efectivo" | "tarjeta" | "glovo" | "just_eat") => {
     if (!sel) return;
     await supabase.from("pedidos").update({ metodo_pago: metodo }).eq("id", sel.id);
     setSel({ ...sel, metodo_pago: metodo });
@@ -269,18 +273,20 @@ function PedidosPage() {
               </div>
 
               <div className="mt-3 grid grid-cols-2 gap-2">
-                <button
-                  onClick={() => cambiarTipo("local")}
-                  className={`flex items-center justify-center gap-1 rounded-xl py-2 text-xs font-bold active:scale-95 ${
-                    sel.tipo === "local" ? "bg-primary text-primary-foreground" : "bg-muted"
-                  }`}
-                ><Home className="h-4 w-4" /> Local</button>
-                <button
-                  onClick={() => cambiarTipo("domicilio")}
-                  className={`flex items-center justify-center gap-1 rounded-xl py-2 text-xs font-bold active:scale-95 ${
-                    sel.tipo === "domicilio" ? "bg-primary text-primary-foreground" : "bg-muted"
-                  }`}
-                ><Bike className="h-4 w-4" /> Domicilio</button>
+                {([
+                  { k: "local", label: "Local", Icon: Home },
+                  { k: "domicilio", label: "Domicilio", Icon: Bike },
+                  { k: "glovo", label: "Glovo", Icon: Bike },
+                  { k: "just_eat", label: "Just Eat", Icon: Bike },
+                ] as const).map(({ k, label, Icon }) => (
+                  <button
+                    key={k}
+                    onClick={() => cambiarTipo(k)}
+                    className={`flex items-center justify-center gap-1 rounded-xl py-2 text-xs font-bold active:scale-95 ${
+                      sel.tipo === k ? "bg-primary text-primary-foreground" : "bg-muted"
+                    }`}
+                  ><Icon className="h-4 w-4" /> {label}</button>
+                ))}
               </div>
 
               {sel.clientes && (
@@ -344,25 +350,31 @@ function PedidosPage() {
 
             <div className="space-y-2 border-t border-border p-4 text-sm">
               <div className="grid grid-cols-2 gap-2">
-                <button
-                  onClick={() => cambiarMetodo("efectivo")}
-                  className={`flex items-center justify-center gap-1 rounded-xl py-2 text-xs font-bold active:scale-95 ${
-                    sel.metodo_pago === "efectivo" ? "bg-primary text-primary-foreground" : "bg-muted"
-                  }`}
-                ><Banknote className="h-4 w-4" /> Efectivo</button>
-                <button
-                  onClick={() => cambiarMetodo("tarjeta")}
-                  className={`flex items-center justify-center gap-1 rounded-xl py-2 text-xs font-bold active:scale-95 ${
-                    sel.metodo_pago === "tarjeta" ? "bg-primary text-primary-foreground" : "bg-muted"
-                  }`}
-                ><CreditCard className="h-4 w-4" /> Tarjeta</button>
+                {([
+                  { k: "efectivo", label: "Efectivo", Icon: Banknote },
+                  { k: "tarjeta", label: "Tarjeta", Icon: CreditCard },
+                  { k: "glovo", label: "Glovo", Icon: Bike },
+                  { k: "just_eat", label: "Just Eat", Icon: Bike },
+                ] as const).map(({ k, label, Icon }) => (
+                  <button
+                    key={k}
+                    onClick={() => cambiarMetodo(k)}
+                    className={`flex items-center justify-center gap-1 rounded-xl py-2 text-xs font-bold active:scale-95 ${
+                      sel.metodo_pago === k ? "bg-primary text-primary-foreground" : "bg-muted"
+                    }`}
+                  ><Icon className="h-4 w-4" /> {label}</button>
+                ))}
               </div>
+              <div className="flex justify-between"><span>Productos</span><span>{eur(totalActual)}</span></div>
+              {Number(sel.envio || 0) > 0 && (
+                <div className="flex justify-between"><span>Envío</span><span>{eur(Number(sel.envio))}</span></div>
+              )}
               {sel.recibido !== null && sel.metodo_pago === "efectivo" && (
                 <div className="flex justify-between"><span>Recibido</span><span>{eur(Number(sel.recibido))}</span></div>
               )}
               <div className="flex items-baseline justify-between border-t border-border pt-2">
                 <span className="font-bold">TOTAL</span>
-                <span className="text-2xl font-black text-primary">{eur(totalActual)}</span>
+                <span className="text-2xl font-black text-primary">{eur(totalActual + Number(sel.envio || 0))}</span>
               </div>
             </div>
           </div>

@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { carrito, useCarrito, calcularTotal, calcularLinea, ItemCarrito } from "@/lib/pos-store";
+import { carrito, useCarrito, calcularTotal, calcularLinea, ItemCarrito, PRECIO_ENVIO_DOMICILIO, TipoPedido } from "@/lib/pos-store";
 import { eur } from "@/lib/format";
 import { ModificadorDialog } from "@/components/ModificadorDialog";
 import { ClienteDialog } from "@/components/ClienteDialog";
@@ -48,8 +48,17 @@ function CajaPage() {
     })();
   }, []);
 
-  const total = calcularTotal(estado.items);
+  const totalProductos = calcularTotal(estado.items);
+  const envio = estado.tipo === "domicilio" ? PRECIO_ENVIO_DOMICILIO : 0;
+  const total = totalProductos + envio;
   const productosFiltrados = productos.filter((p) => p.categoria_id === catActiva);
+
+  const TIPOS: { k: TipoPedido; label: string; Icon: typeof Home }[] = [
+    { k: "local", label: "Local", Icon: Home },
+    { k: "domicilio", label: "Domicilio", Icon: Bike },
+    { k: "glovo", label: "Glovo", Icon: Bike },
+    { k: "just_eat", label: "Just Eat", Icon: Bike },
+  ];
 
   const onClickProducto = (p: Producto) => setEditando({ producto: p });
   const onEditarItem = (item: ItemCarrito) => {
@@ -97,22 +106,17 @@ function CajaPage() {
       <aside className="flex h-full flex-col overflow-hidden rounded-3xl bg-card shadow-sm">
         <div className="space-y-2 border-b border-border p-3">
           <div className="grid grid-cols-2 gap-2">
-            <button
-              onClick={() => carrito.setTipo("local")}
-              className={`flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-bold active:scale-95 ${
-                estado.tipo === "local" ? "bg-primary text-primary-foreground" : "bg-muted"
-              }`}
-            >
-              <Home className="h-4 w-4" /> Local
-            </button>
-            <button
-              onClick={() => carrito.setTipo("domicilio")}
-              className={`flex items-center justify-center gap-2 rounded-2xl py-3 text-sm font-bold active:scale-95 ${
-                estado.tipo === "domicilio" ? "bg-primary text-primary-foreground" : "bg-muted"
-              }`}
-            >
-              <Bike className="h-4 w-4" /> Domicilio
-            </button>
+            {TIPOS.map(({ k, label, Icon }) => (
+              <button
+                key={k}
+                onClick={() => carrito.setTipo(k)}
+                className={`flex items-center justify-center gap-1 rounded-2xl py-3 text-xs font-bold active:scale-95 ${
+                  estado.tipo === k ? "bg-primary text-primary-foreground" : "bg-muted"
+                }`}
+              >
+                <Icon className="h-4 w-4" /> {label}
+              </button>
+            ))}
           </div>
 
           <button
@@ -193,6 +197,18 @@ function CajaPage() {
         </div>
 
         <div className="space-y-2 border-t border-border p-3">
+          {envio > 0 && (
+            <>
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground">Subtotal</span>
+                <span className="font-bold">{eur(totalProductos)}</span>
+              </div>
+              <div className="flex justify-between text-xs">
+                <span className="text-muted-foreground">Envío domicilio</span>
+                <span className="font-bold">{eur(envio)}</span>
+              </div>
+            </>
+          )}
           <div className="flex items-baseline justify-between">
             <span className="text-sm font-bold uppercase text-muted-foreground">Total</span>
             <span className="text-3xl font-black text-primary">{eur(total)}</span>
@@ -244,7 +260,7 @@ function CajaPage() {
       {showPago && (
         <PagoDialog
           estado={estado}
-          total={total}
+          total={totalProductos}
           onClose={() => setShowPago(false)}
           onPagado={() => { carrito.clear(); setShowPago(false); }}
         />

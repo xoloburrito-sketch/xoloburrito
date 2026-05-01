@@ -139,6 +139,7 @@ export type Database = {
           cambio: number | null
           cliente_id: string | null
           created_at: string
+          envio: number
           estado: string
           id: string
           metodo_pago: string | null
@@ -153,6 +154,7 @@ export type Database = {
           cambio?: number | null
           cliente_id?: string | null
           created_at?: string
+          envio?: number
           estado?: string
           id?: string
           metodo_pago?: string | null
@@ -167,6 +169,7 @@ export type Database = {
           cambio?: number | null
           cliente_id?: string | null
           created_at?: string
+          envio?: number
           estado?: string
           id?: string
           metodo_pago?: string | null

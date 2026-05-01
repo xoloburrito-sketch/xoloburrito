@@ -22,9 +22,12 @@ type Estado = {
   cliente_nombre: string | null;
   cliente_telefono: string | null;
   cliente_direccion: string | null;
-  tipo: "local" | "domicilio";
+  tipo: TipoPedido;
   notas: string;
 };
+
+export type TipoPedido = "local" | "domicilio" | "glovo" | "just_eat";
+export const PRECIO_ENVIO_DOMICILIO = 2.5;
 
 let estado: Estado = {
   items: [],
@@ -75,7 +78,7 @@ export const carrito = {
     }
     emit();
   },
-  setTipo: (t: "local" | "domicilio") => { estado = { ...estado, tipo: t }; emit(); },
+  setTipo: (t: TipoPedido) => { estado = { ...estado, tipo: t }; emit(); },
   setNotas: (n: string) => { estado = { ...estado, notas: n }; emit(); },
 };
 

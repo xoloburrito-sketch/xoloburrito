@@ -1,6 +1,6 @@
 import { Link, Outlet, useLocation, useNavigate, createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ShoppingCart, Users, ListOrdered, Settings, LogOut, UtensilsCrossed } from "lucide-react";
+import { ShoppingCart, Users, ListOrdered, Settings, LogOut, UtensilsCrossed, Calculator } from "lucide-react";
 import { estaAutenticado, cerrarSesion } from "@/lib/pin";
 
 export const Route = createFileRoute("/_app")({
@@ -10,6 +10,7 @@ export const Route = createFileRoute("/_app")({
 const nav = [
   { to: "/caja", label: "Caja", Icon: ShoppingCart },
   { to: "/pedidos", label: "Pedidos", Icon: ListOrdered },
+  { to: "/cierre", label: "Cierre", Icon: Calculator },
   { to: "/clientes", label: "Clientes", Icon: Users },
   { to: "/menu", label: "Menú", Icon: UtensilsCrossed },
   { to: "/ajustes", label: "Ajustes", Icon: Settings },

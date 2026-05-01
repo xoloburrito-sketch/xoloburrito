@@ -14,6 +14,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppPedidosRouteImport } from './routes/_app.pedidos'
 import { Route as AppMenuRouteImport } from './routes/_app.menu'
 import { Route as AppClientesRouteImport } from './routes/_app.clientes'
+import { Route as AppCierreRouteImport } from './routes/_app.cierre'
 import { Route as AppCajaRouteImport } from './routes/_app.caja'
 import { Route as AppAjustesRouteImport } from './routes/_app.ajustes'
 
@@ -41,6 +42,11 @@ const AppClientesRoute = AppClientesRouteImport.update({
   path: '/clientes',
   getParentRoute: () => AppRoute,
 } as any)
+const AppCierreRoute = AppCierreRouteImport.update({
+  id: '/cierre',
+  path: '/cierre',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppCajaRoute = AppCajaRouteImport.update({
   id: '/caja',
   path: '/caja',
@@ -56,6 +62,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/ajustes': typeof AppAjustesRoute
   '/caja': typeof AppCajaRoute
+  '/cierre': typeof AppCierreRoute
   '/clientes': typeof AppClientesRoute
   '/menu': typeof AppMenuRoute
   '/pedidos': typeof AppPedidosRoute
@@ -64,6 +71,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/ajustes': typeof AppAjustesRoute
   '/caja': typeof AppCajaRoute
+  '/cierre': typeof AppCierreRoute
   '/clientes': typeof AppClientesRoute
   '/menu': typeof AppMenuRoute
   '/pedidos': typeof AppPedidosRoute
@@ -74,21 +82,37 @@ export interface FileRoutesById {
   '/_app': typeof AppRouteWithChildren
   '/_app/ajustes': typeof AppAjustesRoute
   '/_app/caja': typeof AppCajaRoute
+  '/_app/cierre': typeof AppCierreRoute
   '/_app/clientes': typeof AppClientesRoute
   '/_app/menu': typeof AppMenuRoute
   '/_app/pedidos': typeof AppPedidosRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/ajustes' | '/caja' | '/clientes' | '/menu' | '/pedidos'
+  fullPaths:
+    | '/'
+    | '/ajustes'
+    | '/caja'
+    | '/cierre'
+    | '/clientes'
+    | '/menu'
+    | '/pedidos'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/ajustes' | '/caja' | '/clientes' | '/menu' | '/pedidos'
+  to:
+    | '/'
+    | '/ajustes'
+    | '/caja'
+    | '/cierre'
+    | '/clientes'
+    | '/menu'
+    | '/pedidos'
   id:
     | '__root__'
     | '/'
     | '/_app'
     | '/_app/ajustes'
     | '/_app/caja'
+    | '/_app/cierre'
     | '/_app/clientes'
     | '/_app/menu'
     | '/_app/pedidos'
@@ -136,6 +160,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppClientesRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/cierre': {
+      id: '/_app/cierre'
+      path: '/cierre'
+      fullPath: '/cierre'
+      preLoaderRoute: typeof AppCierreRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/caja': {
       id: '/_app/caja'
       path: '/caja'
@@ -156,6 +187,7 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppAjustesRoute: typeof AppAjustesRoute
   AppCajaRoute: typeof AppCajaRoute
+  AppCierreRoute: typeof AppCierreRoute
   AppClientesRoute: typeof AppClientesRoute
   AppMenuRoute: typeof AppMenuRoute
   AppPedidosRoute: typeof AppPedidosRoute
@@ -164,6 +196,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppAjustesRoute: AppAjustesRoute,
   AppCajaRoute: AppCajaRoute,
+  AppCierreRoute: AppCierreRoute,
   AppClientesRoute: AppClientesRoute,
   AppMenuRoute: AppMenuRoute,
   AppPedidosRoute: AppPedidosRoute,
