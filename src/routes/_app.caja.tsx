@@ -260,7 +260,7 @@ function CajaPage() {
       {showPago && (
         <PagoDialog
           estado={estado}
-          total={total}
+          total={totalProductos}
           onClose={() => setShowPago(false)}
           onPagado={() => { carrito.clear(); setShowPago(false); }}
         />
