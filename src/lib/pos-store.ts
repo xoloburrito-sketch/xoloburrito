@@ -27,7 +27,11 @@ type Estado = {
 };
 
 export type TipoPedido = "local" | "domicilio" | "glovo" | "just_eat";
-export const PRECIO_ENVIO_DOMICILIO = 2.5;
+import { getAjustes } from "./ajustes";
+export const PRECIO_ENVIO_DOMICILIO = 2.5; // fallback
+export const getPrecioEnvio = () => {
+  try { return getAjustes().precioEnvio; } catch { return 2.5; }
+};
 
 let estado: Estado = {
   items: [],
