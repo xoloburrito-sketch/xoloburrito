@@ -165,6 +165,9 @@ body{font-family:'Consolas','Lucida Console','Courier New',monospace;font-size:1
                   Cliente: {estado.cliente_nombre}<br />
                   Tel: {estado.cliente_telefono}
                   {estado.cliente_direccion && (<><br />Dir: {estado.cliente_direccion}</>)}
+                  {estado.cliente_piso && (<><br />Piso: {estado.cliente_piso}</>)}
+                  {estado.cliente_codigo && (<><br />Cod: {estado.cliente_codigo}</>)}
+                  {estado.cliente_nota && (<><br />Nota: {estado.cliente_nota}</>)}
                 </div>
               )}
               <div className="ticket-sep" />
