@@ -22,8 +22,12 @@ type Estado = {
   cliente_nombre: string | null;
   cliente_telefono: string | null;
   cliente_direccion: string | null;
+  cliente_piso: string | null;
+  cliente_codigo: string | null;
+  cliente_nota: string | null;
   tipo: TipoPedido;
   notas: string;
+  envio_override: number | null; // null = usar precio por defecto; 0 = sin envío; N = manual
 };
 
 export type TipoPedido = "local" | "domicilio" | "glovo" | "just_eat";
