@@ -1,0 +1,152 @@
+// Helpers de impresión POS80 reutilizables
+import { eur } from "./format";
+import { getAjustes } from "./ajustes";
+
+export const TICKET_CSS = `
+@page { size: 80mm auto; margin: 0; }
+html,body{margin:0;padding:0;background:#fff;color:#000}
+body{font-family:'Consolas','Lucida Console','Courier New',monospace;font-size:13px;font-weight:600;line-height:1.35;width:72mm;padding:3mm 4mm;letter-spacing:.01em;color:#000}
+.t-title{font-size:18px;font-weight:900;text-align:center;letter-spacing:.05em;margin-bottom:4px}
+.t-sub{text-align:center;font-size:12px;margin-bottom:6px}
+.t-sep{border-top:1px dashed #000;margin:6px 0}
+.t-row{display:flex;justify-content:space-between;gap:8px}
+.t-total{font-size:16px;font-weight:900}
+.t-mod{padding-left:10px;font-size:11px}
+.t-foot{text-align:center;margin-top:10px;font-size:12px}
+.t-big{font-size:20px;font-weight:900;text-align:center;margin:6px 0}
+`;
+
+export function printHTML(innerHtml: string, title = "Ticket") {
+  const html = `<!doctype html><html><head><meta charset="utf-8"><title>${title}</title><style>${TICKET_CSS}</style></head><body>${innerHtml}</body></html>`;
+  const w = window.open("", "_blank", "width=420,height=720");
+  if (!w) return;
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+  setTimeout(() => { w.focus(); w.print(); }, 150);
+}
+
+type Mod = { quitar?: string[]; extras?: { nombre: string; precio: number }[]; notas?: string };
+type ItemTicket = { nombre: string; cantidad: number; precio_unitario: number; modificaciones?: Mod };
+type PedidoTicket = {
+  numero: number;
+  created_at: string;
+  tipo: string;
+  metodo_pago?: string | null;
+  subtotal: number;
+  envio: number;
+  descuento?: number;
+  total: number;
+  recibido?: number | null;
+  cambio?: number | null;
+  cliente?: { nombre: string; telefono: string; direccion?: string | null; piso?: string | null; codigo_puerta?: string | null; nota_reparto?: string | null } | null;
+  notas?: string | null;
+};
+
+const tipoLabel = (t: string) =>
+  t === "local" ? "LOCAL" : t === "domicilio" ? "DOMICILIO" : t === "glovo" ? "GLOVO" : t === "just_eat" ? "JUST EAT" : t.toUpperCase();
+
+const lineaTotal = (i: ItemTicket) => {
+  const ex = (i.modificaciones?.extras || []).reduce((s, e) => s + Number(e.precio), 0);
+  return (Number(i.precio_unitario) + ex) * i.cantidad;
+};
+
+export function ticketHTML(p: PedidoTicket, items: ItemTicket[]) {
+  const a = getAjustes();
+  return `
+<div class="t-title">${a.ticketHeader}</div>
+<div class="t-sub">Pedido #${p.numero}<br/>${new Date(p.created_at).toLocaleString("es-ES")}</div>
+<div class="t-sep"></div>
+<div style="font-weight:800">** ${tipoLabel(p.tipo)} **</div>
+${p.cliente ? `<div style="margin-top:4px">
+  Cliente: ${p.cliente.nombre}<br/>
+  Tel: ${p.cliente.telefono}
+  ${p.cliente.direccion ? `<br/>Dir: ${p.cliente.direccion}` : ""}
+  ${p.cliente.piso ? `<br/>Piso: ${p.cliente.piso}` : ""}
+  ${p.cliente.codigo_puerta ? `<br/>Cod: ${p.cliente.codigo_puerta}` : ""}
+  ${p.cliente.nota_reparto ? `<br/>Nota: ${p.cliente.nota_reparto}` : ""}
+</div>` : ""}
+<div class="t-sep"></div>
+${items.map((i) => `
+  <div style="margin-bottom:6px">
+    <div class="t-row"><span>${i.cantidad}x ${i.nombre}</span><span>${eur(lineaTotal(i))}</span></div>
+    ${(i.modificaciones?.quitar || []).map((q) => `<div class="t-mod">- sin ${q}</div>`).join("")}
+    ${(i.modificaciones?.extras || []).map((e) => `<div class="t-mod">+ ${e.nombre} ${e.precio > 0 ? eur(e.precio) : ""}</div>`).join("")}
+    ${i.modificaciones?.notas ? `<div class="t-mod" style="font-style:italic">* ${i.modificaciones.notas}</div>` : ""}
+  </div>
+`).join("")}
+<div class="t-sep"></div>
+<div class="t-row"><span>Subtotal</span><span>${eur(p.subtotal)}</span></div>
+${Number(p.envio || 0) > 0 ? `<div class="t-row"><span>Envío</span><span>${eur(p.envio)}</span></div>` : ""}
+${Number(p.descuento || 0) > 0 ? `<div class="t-row"><span>Descuento</span><span>-${eur(p.descuento)}</span></div>` : ""}
+<div class="t-row t-total"><span>TOTAL</span><span>${eur(p.total)}</span></div>
+${p.metodo_pago ? `<div class="t-row"><span>Pago (${p.metodo_pago})</span><span>${eur(p.recibido ?? p.total)}</span></div>` : ""}
+${p.metodo_pago === "efectivo" && p.cambio != null ? `<div class="t-row"><span>Cambio</span><span>${eur(p.cambio)}</span></div>` : ""}
+${p.notas ? `<div class="t-sep"></div><div>Notas: ${p.notas}</div>` : ""}
+<div class="t-foot">${getAjustes().ticketFooter}</div>
+`;
+}
+
+export function comandaCocinaHTML(p: { numero: number; tipo: string; created_at: string }, items: ItemTicket[]) {
+  return `
+<div class="t-title">COMANDA COCINA</div>
+<div class="t-big">#${p.numero}</div>
+<div class="t-sub">${new Date(p.created_at).toLocaleTimeString("es-ES")} · ${tipoLabel(p.tipo)}</div>
+<div class="t-sep"></div>
+${items.map((i) => `
+  <div style="margin-bottom:6px;font-size:14px">
+    <div style="font-weight:900">${i.cantidad}x ${i.nombre}</div>
+    ${(i.modificaciones?.quitar || []).map((q) => `<div class="t-mod">- SIN ${q.toUpperCase()}</div>`).join("")}
+    ${(i.modificaciones?.extras || []).map((e) => `<div class="t-mod">+ ${e.nombre.toUpperCase()}</div>`).join("")}
+    ${i.modificaciones?.notas ? `<div class="t-mod" style="font-weight:800">>> ${i.modificaciones.notas}</div>` : ""}
+  </div>
+`).join("")}
+<div class="t-sep"></div>
+`;
+}
+
+export type CierreData = {
+  fecha: string;
+  efectivo: number;
+  tarjeta: number;
+  glovo: number;
+  just_eat: number;
+  envios: number;
+  descuentos: number;
+  ajustes: number;
+  anulados: number;
+  anuladosN: number;
+  local: number;
+  domicilio: number;
+  recoger: number;
+  total: number;
+  pedidos: number;
+  cajaTeorica: number;
+};
+
+export function cierreHTML(c: CierreData) {
+  const a = getAjustes();
+  return `
+<div class="t-title">${a.ticketHeader}</div>
+<div class="t-sub">CIERRE DE JORNADA<br/>${c.fecha} · ${new Date().toLocaleTimeString("es-ES")}</div>
+<div class="t-sep"></div>
+<div class="t-row"><span>Ventas efectivo</span><span>${eur(c.efectivo)}</span></div>
+<div class="t-row"><span>Ventas tarjeta</span><span>${eur(c.tarjeta)}</span></div>
+<div class="t-row"><span>Ventas Glovo</span><span>${eur(c.glovo)}</span></div>
+<div class="t-row"><span>Ventas Just Eat</span><span>${eur(c.just_eat)}</span></div>
+<div class="t-sep"></div>
+<div class="t-row"><span>Local</span><span>${eur(c.local)}</span></div>
+<div class="t-row"><span>Domicilio</span><span>${eur(c.domicilio)}</span></div>
+<div class="t-row"><span>Envíos cobrados</span><span>${eur(c.envios)}</span></div>
+<div class="t-row"><span>Descuentos</span><span>-${eur(c.descuentos)}</span></div>
+<div class="t-row"><span>Ajustes</span><span>${c.ajustes >= 0 ? "+" : ""}${eur(c.ajustes)}</span></div>
+<div class="t-row"><span>Anulados (${c.anuladosN})</span><span>-${eur(c.anulados)}</span></div>
+<div class="t-sep"></div>
+<div class="t-row"><span>Pedidos del día</span><span>${c.pedidos}</span></div>
+<div class="t-row t-total"><span>TOTAL VENTAS</span><span>${eur(c.total)}</span></div>
+<div class="t-sep"></div>
+<div class="t-big">CAJA: ${eur(c.cajaTeorica)}</div>
+<div class="t-sub">(efectivo + ajustes)</div>
+<div class="t-foot">Firma: _____________________</div>
+`;
+}
