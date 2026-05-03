@@ -26,12 +26,13 @@ type Pedido = {
   total: number;
   subtotal: number;
   envio: number;
+  descuento: number;
   recibido: number | null;
   cambio: number | null;
   notas: string | null;
   cliente_id: string | null;
   created_at: string;
-  clientes: { nombre: string; telefono: string } | null;
+  clientes: { nombre: string; telefono: string; direccion: string | null; piso: string | null; codigo_puerta: string | null; nota_reparto: string | null } | null;
 };
 
 type Item = {
@@ -42,6 +43,8 @@ type Item = {
   cantidad: number;
   precio_unitario: number;
   modificaciones: Modificacion;
+  pagado: boolean;
+  metodo_pago: string | null;
 };
 
 type Producto = {
