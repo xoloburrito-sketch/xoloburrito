@@ -78,7 +78,7 @@ ${items.map((i) => `
 <div class="t-sep"></div>
 <div class="t-row"><span>Subtotal</span><span>${eur(p.subtotal)}</span></div>
 ${Number(p.envio || 0) > 0 ? `<div class="t-row"><span>Envío</span><span>${eur(p.envio)}</span></div>` : ""}
-${Number(p.descuento || 0) > 0 ? `<div class="t-row"><span>Descuento</span><span>-${eur(p.descuento)}</span></div>` : ""}
+${Number(p.descuento || 0) > 0 ? `<div class="t-row"><span>Descuento</span><span>-${eur(Number(p.descuento))}</span></div>` : ""}
 <div class="t-row t-total"><span>TOTAL</span><span>${eur(p.total)}</span></div>
 ${p.metodo_pago ? `<div class="t-row"><span>Pago (${p.metodo_pago})</span><span>${eur(p.recibido ?? p.total)}</span></div>` : ""}
 ${p.metodo_pago === "efectivo" && p.cambio != null ? `<div class="t-row"><span>Cambio</span><span>${eur(p.cambio)}</span></div>` : ""}
