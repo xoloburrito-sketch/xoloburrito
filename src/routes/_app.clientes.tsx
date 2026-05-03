@@ -15,6 +15,9 @@ type Cliente = {
   nombre: string;
   direccion: string | null;
   notas: string | null;
+  piso: string | null;
+  codigo_puerta: string | null;
+  nota_reparto: string | null;
   created_at: string;
 };
 
