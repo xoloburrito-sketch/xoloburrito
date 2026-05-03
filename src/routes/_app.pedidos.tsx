@@ -394,11 +394,31 @@ function PedidosPage() {
                   <div className="text-3xl font-black">#{sel.numero}</div>
                   <div className="text-sm text-muted-foreground">{fechaCorta(sel.created_at)}</div>
                 </div>
-                <button
-                  onClick={borrarPedido}
-                  className="flex items-center gap-1 rounded-xl bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive active:scale-95"
-                >
-                  <Trash2 className="h-4 w-4" /> Borrar
+                <div className="flex flex-col gap-1">
+                  <button onClick={anular} className="flex items-center gap-1 rounded-xl bg-destructive/10 px-3 py-1.5 text-xs font-bold text-destructive active:scale-95">
+                    <Ban className="h-3 w-3" /> Anular
+                  </button>
+                  <button onClick={borrarPedido} className="flex items-center gap-1 rounded-xl bg-destructive/10 px-3 py-1.5 text-xs font-bold text-destructive active:scale-95">
+                    <Trash2 className="h-3 w-3" /> Borrar
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-2 grid grid-cols-3 gap-1">
+                <button onClick={reimprimir} className="flex items-center justify-center gap-1 rounded-xl bg-secondary px-2 py-2 text-xs font-bold text-secondary-foreground active:scale-95">
+                  <Printer className="h-3 w-3" /> Ticket
+                </button>
+                <button onClick={imprimirComanda} className="flex items-center justify-center gap-1 rounded-xl bg-accent px-2 py-2 text-xs font-bold active:scale-95">
+                  <ChefHat className="h-3 w-3" /> Comanda
+                </button>
+                <button onClick={() => setShowSplit(true)} className="flex items-center justify-center gap-1 rounded-xl bg-primary px-2 py-2 text-xs font-bold text-primary-foreground active:scale-95">
+                  <Split className="h-3 w-3" /> Dividir
+                </button>
+                <button onClick={duplicar} className="flex items-center justify-center gap-1 rounded-xl bg-muted px-2 py-2 text-xs font-bold active:scale-95">
+                  <Copy className="h-3 w-3" /> Duplicar
+                </button>
+                <button onClick={cambiarDireccion} className="col-span-2 flex items-center justify-center gap-1 rounded-xl bg-muted px-2 py-2 text-xs font-bold active:scale-95">
+                  <MapPin className="h-3 w-3" /> Editar dirección
                 </button>
               </div>
 
