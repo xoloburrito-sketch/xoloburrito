@@ -72,13 +72,18 @@ function PedidosPage() {
   const [extras, setExtras] = useState<Extra[]>([]);
   const [editando, setEditando] = useState<{ producto: Producto; item?: Item } | null>(null);
   const [showAdd, setShowAdd] = useState(false);
+  const [showSplit, setShowSplit] = useState(false);
+  const [filtro, setFiltro] = useState<"hoy" | "todos" | "anulados" | "modificados" | "glovo" | "just_eat">("hoy");
+  const [busqClient, setBusqClient] = useState("");
+
+  const SELECT_PEDIDO = "*, clientes(nombre, telefono, direccion, piso, codigo_puerta, nota_reparto)";
 
   const cargarPedidos = useCallback(async () => {
     const { data } = await supabase
       .from("pedidos")
-      .select("*, clientes(nombre, telefono)")
+      .select(SELECT_PEDIDO)
       .order("created_at", { ascending: false })
-      .limit(200);
+      .limit(500);
     setPedidos((data as unknown as Pedido[]) || []);
   }, []);
 
