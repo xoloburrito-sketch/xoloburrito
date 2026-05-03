@@ -324,16 +324,34 @@ function PedidosPage() {
             <div className="text-xl font-black">{eur(totalHoy)}</div>
           </div>
         </div>
+        <div className="flex flex-wrap gap-1 border-b border-border p-2">
+          {([
+            { k: "hoy", label: "Hoy" },
+            { k: "todos", label: "Todos" },
+            { k: "modificados", label: "Modificados" },
+            { k: "anulados", label: "Anulados" },
+            { k: "glovo", label: "Glovo" },
+            { k: "just_eat", label: "Just Eat" },
+          ] as const).map(({ k, label }) => (
+            <button key={k} onClick={() => setFiltro(k)}
+              className={`rounded-xl px-3 py-1.5 text-xs font-bold active:scale-95 ${filtro === k ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
+              {label}
+            </button>
+          ))}
+          <input value={busqClient} onChange={(e) => setBusqClient(e.target.value)}
+            placeholder="Buscar nº/cliente/tel…"
+            className="ml-auto w-40 rounded-xl border border-border bg-background px-3 py-1.5 text-xs" />
+        </div>
         <div className="flex-1 divide-y divide-border overflow-y-auto">
-          {pedidos.map((p) => (
+          {pedidosFiltrados.map((p) => (
             <button
               key={p.id}
               onClick={() => setSel(p)}
               className={`flex w-full items-center gap-3 p-4 text-left transition active:scale-[0.99] ${
                 sel?.id === p.id ? "bg-accent" : "hover:bg-muted"
-              }`}
+              } ${p.estado === "anulado" ? "opacity-50 line-through" : ""}`}
             >
-              <div className="rounded-xl bg-primary px-3 py-2 text-center text-primary-foreground">
+              <div className={`rounded-xl px-3 py-2 text-center text-primary-foreground ${p.estado === "anulado" ? "bg-destructive" : "bg-primary"}`}>
                 <div className="text-xs opacity-80">#</div>
                 <div className="text-lg font-black">{p.numero}</div>
               </div>
@@ -341,6 +359,8 @@ function PedidosPage() {
                 <div className="flex items-center gap-2">
                   {p.tipo === "domicilio" ? <Bike className="h-4 w-4" /> : <Home className="h-4 w-4" />}
                   <span className="font-bold">{p.clientes?.nombre || "Sin cliente"}</span>
+                  {p.estado === "modificado" && <span className="rounded bg-accent px-1 text-[10px] font-bold">MOD</span>}
+                  {p.estado === "anulado" && <span className="rounded bg-destructive/20 px-1 text-[10px] font-bold text-destructive">ANUL</span>}
                 </div>
                 <div className="text-xs text-muted-foreground">{fechaCorta(p.created_at)}</div>
               </div>
