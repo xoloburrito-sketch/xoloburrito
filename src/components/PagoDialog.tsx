@@ -1,9 +1,10 @@
 import { useMemo, useRef, useState } from "react";
-import { Modificacion, PRECIO_ENVIO_DOMICILIO, TipoPedido } from "@/lib/pos-store";
+import { Modificacion, getPrecioEnvio, TipoPedido } from "@/lib/pos-store";
 import { eur } from "@/lib/format";
 import { X, Printer, Calculator, Banknote, CreditCard, Bike } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { ticketHTML, printHTML, TICKET_CSS } from "@/lib/ticket";
 
 type Item = {
   uid: string;
@@ -20,8 +21,12 @@ type Estado = {
   cliente_nombre: string | null;
   cliente_telefono: string | null;
   cliente_direccion: string | null;
+  cliente_piso?: string | null;
+  cliente_codigo?: string | null;
+  cliente_nota?: string | null;
   tipo: TipoPedido;
   notas: string;
+  envio_override?: number | null;
 };
 
 type Metodo = "efectivo" | "tarjeta" | "glovo" | "just_eat";
@@ -45,7 +50,8 @@ export function PagoDialog({
   onClose: () => void;
   onPagado: () => void;
 }) {
-  const envio = estado.tipo === "domicilio" ? PRECIO_ENVIO_DOMICILIO : 0;
+  const envioDefault = estado.tipo === "domicilio" ? getPrecioEnvio() : 0;
+  const envio = estado.envio_override !== undefined && estado.envio_override !== null ? estado.envio_override : envioDefault;
   const total = totalProductos + envio;
 
   // Si es plataforma, método por defecto coincide
@@ -159,6 +165,9 @@ body{font-family:'Consolas','Lucida Console','Courier New',monospace;font-size:1
                   Cliente: {estado.cliente_nombre}<br />
                   Tel: {estado.cliente_telefono}
                   {estado.cliente_direccion && (<><br />Dir: {estado.cliente_direccion}</>)}
+                  {estado.cliente_piso && (<><br />Piso: {estado.cliente_piso}</>)}
+                  {estado.cliente_codigo && (<><br />Cod: {estado.cliente_codigo}</>)}
+                  {estado.cliente_nota && (<><br />Nota: {estado.cliente_nota}</>)}
                 </div>
               )}
               <div className="ticket-sep" />

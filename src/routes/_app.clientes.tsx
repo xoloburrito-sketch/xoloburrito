@@ -15,6 +15,9 @@ type Cliente = {
   nombre: string;
   direccion: string | null;
   notas: string | null;
+  piso: string | null;
+  codigo_puerta: string | null;
+  nota_reparto: string | null;
   created_at: string;
 };
 
@@ -105,6 +108,9 @@ function ClienteFormDialog({
     telefono: cliente?.telefono ?? "",
     nombre: cliente?.nombre ?? "",
     direccion: cliente?.direccion ?? "",
+    piso: cliente?.piso ?? "",
+    codigo_puerta: cliente?.codigo_puerta ?? "",
+    nota_reparto: cliente?.nota_reparto ?? "",
     notas: cliente?.notas ?? "",
   });
   const guardar = async () => {
@@ -113,6 +119,9 @@ function ClienteFormDialog({
       telefono: f.telefono.trim(),
       nombre: f.nombre.trim(),
       direccion: f.direccion.trim() || null,
+      piso: f.piso.trim() || null,
+      codigo_puerta: f.codigo_puerta.trim() || null,
+      nota_reparto: f.nota_reparto.trim() || null,
       notas: f.notas.trim() || null,
     };
     const { error } = cliente
@@ -124,20 +133,30 @@ function ClienteFormDialog({
   };
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-2 sm:items-center sm:p-4" onClick={onClose}>
-      <div className="w-full max-w-md rounded-3xl bg-card p-5 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between">
+      <div className="flex max-h-[92vh] w-full max-w-md flex-col rounded-3xl bg-card shadow-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between border-b border-border p-5">
           <h2 className="text-2xl font-black">{cliente ? "Editar" : "Nuevo"} cliente</h2>
           <button onClick={onClose}><X className="h-6 w-6" /></button>
         </div>
-        <div className="mt-4 space-y-3">
+        <div className="flex-1 space-y-3 overflow-y-auto p-5">
           <input value={f.telefono} onChange={(e) => setF({ ...f, telefono: e.target.value })}
             placeholder="Teléfono *" inputMode="tel" className="w-full rounded-xl border border-border bg-background p-4 text-lg" />
           <input value={f.nombre} onChange={(e) => setF({ ...f, nombre: e.target.value })}
             placeholder="Nombre *" className="w-full rounded-xl border border-border bg-background p-4 text-lg" />
           <textarea value={f.direccion} onChange={(e) => setF({ ...f, direccion: e.target.value })}
-            placeholder="Dirección" rows={2} className="w-full rounded-xl border border-border bg-background p-4" />
+            placeholder="Dirección (calle, número)" rows={2} className="w-full rounded-xl border border-border bg-background p-4" />
+          <div className="grid grid-cols-2 gap-2">
+            <input value={f.piso} onChange={(e) => setF({ ...f, piso: e.target.value })}
+              placeholder="Piso / Puerta" className="w-full rounded-xl border border-border bg-background p-3" />
+            <input value={f.codigo_puerta} onChange={(e) => setF({ ...f, codigo_puerta: e.target.value })}
+              placeholder="Código portal" className="w-full rounded-xl border border-border bg-background p-3" />
+          </div>
+          <textarea value={f.nota_reparto} onChange={(e) => setF({ ...f, nota_reparto: e.target.value })}
+            placeholder="Nota de reparto (timbre, planta…)" rows={2} className="w-full rounded-xl border border-border bg-background p-4" />
           <textarea value={f.notas} onChange={(e) => setF({ ...f, notas: e.target.value })}
             placeholder="Notas (alergias, preferencias…)" rows={2} className="w-full rounded-xl border border-border bg-background p-4" />
+        </div>
+        <div className="border-t border-border p-4">
           <button onClick={guardar} className="w-full rounded-2xl bg-primary py-4 text-lg font-black text-primary-foreground active:scale-95">
             Guardar
           </button>

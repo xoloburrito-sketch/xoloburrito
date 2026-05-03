@@ -22,22 +22,36 @@ type Estado = {
   cliente_nombre: string | null;
   cliente_telefono: string | null;
   cliente_direccion: string | null;
+  cliente_piso: string | null;
+  cliente_codigo: string | null;
+  cliente_nota: string | null;
   tipo: TipoPedido;
   notas: string;
+  envio_override: number | null; // null = usar precio por defecto; 0 = sin envío; N = manual
 };
 
 export type TipoPedido = "local" | "domicilio" | "glovo" | "just_eat";
-export const PRECIO_ENVIO_DOMICILIO = 2.5;
+import { getAjustes } from "./ajustes";
+export const PRECIO_ENVIO_DOMICILIO = 2.5; // fallback
+export const getPrecioEnvio = () => {
+  try { return getAjustes().precioEnvio; } catch { return 2.5; }
+};
 
-let estado: Estado = {
+const initial = (): Estado => ({
   items: [],
   cliente_id: null,
   cliente_nombre: null,
   cliente_telefono: null,
   cliente_direccion: null,
+  cliente_piso: null,
+  cliente_codigo: null,
+  cliente_nota: null,
   tipo: "local",
   notas: "",
-};
+  envio_override: null,
+});
+
+let estado: Estado = initial();
 
 const listeners = new Set<() => void>();
 const emit = () => listeners.forEach((l) => l());
@@ -64,22 +78,20 @@ export const carrito = {
     emit();
   },
   clear: () => {
-    estado = {
-      items: [], cliente_id: null, cliente_nombre: null, cliente_telefono: null,
-      cliente_direccion: null, tipo: "local", notas: "",
-    };
+    estado = initial();
     emit();
   },
-  setCliente: (c: { id: string; nombre: string; telefono: string; direccion: string | null } | null) => {
+  setCliente: (c: { id: string; nombre: string; telefono: string; direccion: string | null; piso?: string | null; codigo_puerta?: string | null; nota_reparto?: string | null } | null) => {
     if (!c) {
-      estado = { ...estado, cliente_id: null, cliente_nombre: null, cliente_telefono: null, cliente_direccion: null };
+      estado = { ...estado, cliente_id: null, cliente_nombre: null, cliente_telefono: null, cliente_direccion: null, cliente_piso: null, cliente_codigo: null, cliente_nota: null };
     } else {
-      estado = { ...estado, cliente_id: c.id, cliente_nombre: c.nombre, cliente_telefono: c.telefono, cliente_direccion: c.direccion };
+      estado = { ...estado, cliente_id: c.id, cliente_nombre: c.nombre, cliente_telefono: c.telefono, cliente_direccion: c.direccion, cliente_piso: c.piso ?? null, cliente_codigo: c.codigo_puerta ?? null, cliente_nota: c.nota_reparto ?? null };
     }
     emit();
   },
   setTipo: (t: TipoPedido) => { estado = { ...estado, tipo: t }; emit(); },
   setNotas: (n: string) => { estado = { ...estado, notas: n }; emit(); },
+  setEnvioOverride: (v: number | null) => { estado = { ...estado, envio_override: v }; emit(); },
 };
 
 export const useCarrito = () => useSyncExternalStore(carrito.subscribe, carrito.get, carrito.get);

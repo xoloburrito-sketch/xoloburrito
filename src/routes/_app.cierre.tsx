@@ -175,7 +175,25 @@ function CierrePage() {
     };
   }, [pedidos]);
 
-  const imprimir = () => window.print();
+  const imprimir = async () => {
+    const { printHTML, cierreHTML } = await import("@/lib/ticket");
+    const anulados = pedidos.filter((p) => (p as unknown as { estado?: string }).estado === "anulado");
+    const validos = pedidos.filter((p) => (p as unknown as { estado?: string }).estado !== "anulado");
+    const sum = (arr: typeof pedidos) => arr.reduce((s, p) => s + Number(p.total), 0);
+    const sumBy = (k: string) => sum(validos.filter((p) => p.metodo_pago === k));
+    const sumTipo = (k: string) => sum(validos.filter((p) => p.tipo === k));
+    const efectivo = sumBy("efectivo");
+    printHTML(cierreHTML({
+      fecha,
+      efectivo, tarjeta: sumBy("tarjeta"), glovo: sumBy("glovo"), just_eat: sumBy("just_eat"),
+      envios: validos.reduce((s, p) => s + Number(p.envio || 0), 0),
+      descuentos: 0, ajustes: 0,
+      anulados: sum(anulados), anuladosN: anulados.length,
+      local: sumTipo("local"), domicilio: sumTipo("domicilio"), recoger: 0,
+      total: sum(validos), pedidos: validos.length,
+      cajaTeorica: efectivo,
+    }), `Cierre ${fecha}`);
+  };
 
   return (
     <div className="h-full overflow-y-auto p-4">

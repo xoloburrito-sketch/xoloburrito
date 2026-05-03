@@ -1,12 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { carrito, useCarrito, calcularTotal, calcularLinea, ItemCarrito, PRECIO_ENVIO_DOMICILIO, TipoPedido } from "@/lib/pos-store";
+import { carrito, useCarrito, calcularTotal, calcularLinea, ItemCarrito, getPrecioEnvio, TipoPedido } from "@/lib/pos-store";
 import { eur } from "@/lib/format";
 import { ModificadorDialog } from "@/components/ModificadorDialog";
 import { ClienteDialog } from "@/components/ClienteDialog";
 import { PagoDialog } from "@/components/PagoDialog";
-import { Trash2, User, Home, Bike, Plus, Minus, Pencil } from "lucide-react";
+import { Trash2, User, Home, Bike, Plus, Minus, Pencil, Bike as BikeIcon } from "lucide-react";
 
 export const Route = createFileRoute("/_app/caja")({
   component: CajaPage,
@@ -49,7 +49,8 @@ function CajaPage() {
   }, []);
 
   const totalProductos = calcularTotal(estado.items);
-  const envio = estado.tipo === "domicilio" ? PRECIO_ENVIO_DOMICILIO : 0;
+  const envioDefault = estado.tipo === "domicilio" ? getPrecioEnvio() : 0;
+  const envio = estado.envio_override !== null ? estado.envio_override : envioDefault;
   const total = totalProductos + envio;
   const productosFiltrados = productos.filter((p) => p.categoria_id === catActiva);
 
@@ -197,17 +198,31 @@ function CajaPage() {
         </div>
 
         <div className="space-y-2 border-t border-border p-3">
-          {envio > 0 && (
-            <>
+          {(estado.tipo === "domicilio" || envio > 0) && (
+            <div className="space-y-1 rounded-xl bg-muted p-2">
               <div className="flex justify-between text-xs">
                 <span className="text-muted-foreground">Subtotal</span>
                 <span className="font-bold">{eur(totalProductos)}</span>
               </div>
-              <div className="flex justify-between text-xs">
-                <span className="text-muted-foreground">Envío domicilio</span>
-                <span className="font-bold">{eur(envio)}</span>
+              <div className="flex items-center justify-between gap-2 text-xs">
+                <span className="flex items-center gap-1 font-bold"><BikeIcon className="h-3 w-3" /> Envío</span>
+                <div className="flex items-center gap-1">
+                  <input
+                    type="number" step="0.50" min="0"
+                    value={envio}
+                    onChange={(e) => carrito.setEnvioOverride(parseFloat(e.target.value) || 0)}
+                    className="w-16 rounded border border-border bg-background px-2 py-1 text-right text-sm font-bold"
+                  />
+                  <span>€</span>
+                  {envio > 0 && (
+                    <button onClick={() => carrito.setEnvioOverride(0)} className="rounded bg-destructive/10 px-2 py-1 text-xs text-destructive">quitar</button>
+                  )}
+                  {estado.envio_override !== null && (
+                    <button onClick={() => carrito.setEnvioOverride(null)} className="rounded bg-secondary/20 px-2 py-1 text-xs">auto</button>
+                  )}
+                </div>
               </div>
-            </>
+            </div>
           )}
           <div className="flex items-baseline justify-between">
             <span className="text-sm font-bold uppercase text-muted-foreground">Total</span>

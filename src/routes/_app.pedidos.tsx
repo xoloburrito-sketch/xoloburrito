@@ -1,14 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { eur, fechaCorta } from "@/lib/format";
 import {
   ChevronRight, Banknote, CreditCard, Bike, Home,
-  Trash2, Plus, Minus, Pencil, X,
+  Trash2, Plus, Minus, Pencil, X, Printer, ChefHat, Copy, Ban, Split, MapPin,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ModificadorDialog } from "@/components/ModificadorDialog";
+import { SplitPaymentDialog } from "@/components/SplitPaymentDialog";
 import type { Modificacion, ItemCarrito } from "@/lib/pos-store";
+import { ticketHTML, comandaCocinaHTML, printHTML } from "@/lib/ticket";
+import { getPrecioEnvio } from "@/lib/pos-store";
 
 export const Route = createFileRoute("/_app/pedidos")({
   component: PedidosPage,
@@ -23,12 +26,13 @@ type Pedido = {
   total: number;
   subtotal: number;
   envio: number;
+  descuento: number;
   recibido: number | null;
   cambio: number | null;
   notas: string | null;
   cliente_id: string | null;
   created_at: string;
-  clientes: { nombre: string; telefono: string } | null;
+  clientes: { nombre: string; telefono: string; direccion: string | null; piso: string | null; codigo_puerta: string | null; nota_reparto: string | null } | null;
 };
 
 type Item = {
@@ -39,6 +43,8 @@ type Item = {
   cantidad: number;
   precio_unitario: number;
   modificaciones: Modificacion;
+  pagado: boolean;
+  metodo_pago: string | null;
 };
 
 type Producto = {
@@ -66,13 +72,18 @@ function PedidosPage() {
   const [extras, setExtras] = useState<Extra[]>([]);
   const [editando, setEditando] = useState<{ producto: Producto; item?: Item } | null>(null);
   const [showAdd, setShowAdd] = useState(false);
+  const [showSplit, setShowSplit] = useState(false);
+  const [filtro, setFiltro] = useState<"hoy" | "todos" | "anulados" | "modificados" | "glovo" | "just_eat">("hoy");
+  const [busqClient, setBusqClient] = useState("");
+
+  const SELECT_PEDIDO = "*, clientes(nombre, telefono, direccion, piso, codigo_puerta, nota_reparto)";
 
   const cargarPedidos = useCallback(async () => {
     const { data } = await supabase
       .from("pedidos")
-      .select("*, clientes(nombre, telefono)")
+      .select(SELECT_PEDIDO)
       .order("created_at", { ascending: false })
-      .limit(200);
+      .limit(500);
     setPedidos((data as unknown as Pedido[]) || []);
   }, []);
 
@@ -102,11 +113,12 @@ function PedidosPage() {
 
   const recalcularTotal = async (pedidoId: string, nuevosItems: Item[]) => {
     const subtotal = nuevosItems.reduce((s, i) => s + lineaTotal(i), 0);
-    const envio = sel?.tipo === "domicilio" ? 2.5 : 0;
-    await supabase.from("pedidos").update({ subtotal, envio, total: subtotal + envio }).eq("id", pedidoId);
+    const envio = sel?.tipo === "domicilio" ? getPrecioEnvio() : 0;
+    const update = { subtotal, envio, total: subtotal + envio, ...(sel?.estado !== "anulado" ? { estado: "modificado" } : {}) };
+    await supabase.from("pedidos").update(update).eq("id", pedidoId);
     const { data } = await supabase
       .from("pedidos")
-      .select("*, clientes(nombre, telefono)")
+      .select(SELECT_PEDIDO)
       .eq("id", pedidoId)
       .single();
     if (data) setSel(data as unknown as Pedido);
@@ -173,11 +185,11 @@ function PedidosPage() {
 
   const cambiarTipo = async (tipo: "local" | "domicilio" | "glovo" | "just_eat") => {
     if (!sel) return;
-    const envio = tipo === "domicilio" ? 2.5 : 0;
+    const envio = tipo === "domicilio" ? getPrecioEnvio() : 0;
     const subtotal = items.reduce((s, i) => s + lineaTotal(i), 0);
     await supabase.from("pedidos").update({ tipo, envio, total: subtotal + envio, subtotal }).eq("id", sel.id);
     cargarPedidos();
-    const { data } = await supabase.from("pedidos").select("*, clientes(nombre, telefono)").eq("id", sel.id).single();
+    const { data } = await supabase.from("pedidos").select("*, clientes(nombre, telefono, direccion, piso, codigo_puerta, nota_reparto)").eq("id", sel.id).single();
     if (data) setSel(data as unknown as Pedido);
   };
 
@@ -198,10 +210,99 @@ function PedidosPage() {
   };
 
   const totalHoy = pedidos
-    .filter((p) => new Date(p.created_at).toDateString() === new Date().toDateString())
+    .filter((p) => new Date(p.created_at).toDateString() === new Date().toDateString() && p.estado !== "anulado")
     .reduce((s, p) => s + Number(p.total), 0);
 
   const totalActual = items.reduce((s, i) => s + lineaTotal(i), 0);
+
+  const pedidosFiltrados = useMemo(() => {
+    let arr = pedidos;
+    const hoy = new Date().toDateString();
+    if (filtro === "hoy") arr = arr.filter((p) => new Date(p.created_at).toDateString() === hoy);
+    else if (filtro === "anulados") arr = arr.filter((p) => p.estado === "anulado");
+    else if (filtro === "modificados") arr = arr.filter((p) => p.estado === "modificado");
+    else if (filtro === "glovo") arr = arr.filter((p) => p.tipo === "glovo");
+    else if (filtro === "just_eat") arr = arr.filter((p) => p.tipo === "just_eat");
+    if (busqClient.trim()) {
+      const q = busqClient.toLowerCase();
+      arr = arr.filter((p) =>
+        p.clientes?.nombre.toLowerCase().includes(q) ||
+        p.clientes?.telefono.includes(q) ||
+        String(p.numero).includes(q)
+      );
+    }
+    return arr;
+  }, [pedidos, filtro, busqClient]);
+
+  const reimprimir = async () => {
+    if (!sel) return;
+    const cli = sel.clientes ? {
+      nombre: sel.clientes.nombre, telefono: sel.clientes.telefono,
+      direccion: sel.clientes.direccion, piso: sel.clientes.piso,
+      codigo_puerta: sel.clientes.codigo_puerta, nota_reparto: sel.clientes.nota_reparto,
+    } : null;
+    printHTML(ticketHTML({
+      numero: sel.numero, created_at: sel.created_at, tipo: sel.tipo,
+      metodo_pago: sel.metodo_pago, subtotal: Number(sel.subtotal),
+      envio: Number(sel.envio || 0), descuento: Number(sel.descuento || 0),
+      total: Number(sel.total), recibido: sel.recibido, cambio: sel.cambio,
+      cliente: cli, notas: sel.notas,
+    }, items), `Ticket #${sel.numero}`);
+  };
+
+  const imprimirComanda = () => {
+    if (!sel) return;
+    printHTML(comandaCocinaHTML({ numero: sel.numero, tipo: sel.tipo, created_at: sel.created_at }, items), `Comanda #${sel.numero}`);
+  };
+
+  const duplicar = async () => {
+    if (!sel) return;
+    if (!confirm(`¿Duplicar pedido #${sel.numero}?`)) return;
+    const { data: nuevo, error } = await supabase.from("pedidos").insert({
+      cliente_id: sel.cliente_id, tipo: sel.tipo, estado: "pendiente",
+      subtotal: sel.subtotal, envio: sel.envio, total: sel.total, notas: sel.notas,
+    }).select().single();
+    if (error || !nuevo) { toast.error(error?.message || "Error"); return; }
+    const copia = items.map((i) => ({
+      pedido_id: nuevo.id, producto_id: i.producto_id, nombre: i.nombre,
+      cantidad: i.cantidad, precio_unitario: i.precio_unitario,
+      modificaciones: i.modificaciones as never,
+    }));
+    if (copia.length) await supabase.from("items_pedido").insert(copia);
+    toast.success(`Pedido #${nuevo.numero} duplicado`);
+    cargarPedidos();
+  };
+
+  const anular = async () => {
+    if (!sel) return;
+    if (!confirm(`¿Anular pedido #${sel.numero}? Quedará marcado como anulado.`)) return;
+    await supabase.from("pedidos").update({ estado: "anulado" }).eq("id", sel.id);
+    toast.success(`Pedido #${sel.numero} anulado`);
+    setSel({ ...sel, estado: "anulado" });
+    cargarPedidos();
+  };
+
+  const cambiarDireccion = async () => {
+    if (!sel?.cliente_id || !sel.clientes) { toast.error("Pedido sin cliente"); return; }
+    const dir = prompt("Nueva dirección:", sel.clientes.direccion || "");
+    if (dir == null) return;
+    const piso = prompt("Piso / Puerta:", sel.clientes.piso || "");
+    if (piso == null) return;
+    const cod = prompt("Código portal:", sel.clientes.codigo_puerta || "");
+    if (cod == null) return;
+    const nota = prompt("Nota de reparto:", sel.clientes.nota_reparto || "");
+    if (nota == null) return;
+    await supabase.from("clientes").update({
+      direccion: dir.trim() || null,
+      piso: piso.trim() || null,
+      codigo_puerta: cod.trim() || null,
+      nota_reparto: nota.trim() || null,
+    }).eq("id", sel.cliente_id);
+    toast.success("Dirección actualizada");
+    cargarPedidos();
+    const { data } = await supabase.from("pedidos").select(SELECT_PEDIDO).eq("id", sel.id).single();
+    if (data) setSel(data as unknown as Pedido);
+  };
 
   // convierte Item -> ItemCarrito para reusar el dialog
   const itemToCarrito = (it: Item): ItemCarrito => ({
@@ -223,16 +324,34 @@ function PedidosPage() {
             <div className="text-xl font-black">{eur(totalHoy)}</div>
           </div>
         </div>
+        <div className="flex flex-wrap gap-1 border-b border-border p-2">
+          {([
+            { k: "hoy", label: "Hoy" },
+            { k: "todos", label: "Todos" },
+            { k: "modificados", label: "Modificados" },
+            { k: "anulados", label: "Anulados" },
+            { k: "glovo", label: "Glovo" },
+            { k: "just_eat", label: "Just Eat" },
+          ] as const).map(({ k, label }) => (
+            <button key={k} onClick={() => setFiltro(k)}
+              className={`rounded-xl px-3 py-1.5 text-xs font-bold active:scale-95 ${filtro === k ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
+              {label}
+            </button>
+          ))}
+          <input value={busqClient} onChange={(e) => setBusqClient(e.target.value)}
+            placeholder="Buscar nº/cliente/tel…"
+            className="ml-auto w-40 rounded-xl border border-border bg-background px-3 py-1.5 text-xs" />
+        </div>
         <div className="flex-1 divide-y divide-border overflow-y-auto">
-          {pedidos.map((p) => (
+          {pedidosFiltrados.map((p) => (
             <button
               key={p.id}
               onClick={() => setSel(p)}
               className={`flex w-full items-center gap-3 p-4 text-left transition active:scale-[0.99] ${
                 sel?.id === p.id ? "bg-accent" : "hover:bg-muted"
-              }`}
+              } ${p.estado === "anulado" ? "opacity-50 line-through" : ""}`}
             >
-              <div className="rounded-xl bg-primary px-3 py-2 text-center text-primary-foreground">
+              <div className={`rounded-xl px-3 py-2 text-center text-primary-foreground ${p.estado === "anulado" ? "bg-destructive" : "bg-primary"}`}>
                 <div className="text-xs opacity-80">#</div>
                 <div className="text-lg font-black">{p.numero}</div>
               </div>
@@ -240,6 +359,8 @@ function PedidosPage() {
                 <div className="flex items-center gap-2">
                   {p.tipo === "domicilio" ? <Bike className="h-4 w-4" /> : <Home className="h-4 w-4" />}
                   <span className="font-bold">{p.clientes?.nombre || "Sin cliente"}</span>
+                  {p.estado === "modificado" && <span className="rounded bg-accent px-1 text-[10px] font-bold">MOD</span>}
+                  {p.estado === "anulado" && <span className="rounded bg-destructive/20 px-1 text-[10px] font-bold text-destructive">ANUL</span>}
                 </div>
                 <div className="text-xs text-muted-foreground">{fechaCorta(p.created_at)}</div>
               </div>
@@ -273,11 +394,31 @@ function PedidosPage() {
                   <div className="text-3xl font-black">#{sel.numero}</div>
                   <div className="text-sm text-muted-foreground">{fechaCorta(sel.created_at)}</div>
                 </div>
-                <button
-                  onClick={borrarPedido}
-                  className="flex items-center gap-1 rounded-xl bg-destructive/10 px-3 py-2 text-sm font-bold text-destructive active:scale-95"
-                >
-                  <Trash2 className="h-4 w-4" /> Borrar
+                <div className="flex flex-col gap-1">
+                  <button onClick={anular} className="flex items-center gap-1 rounded-xl bg-destructive/10 px-3 py-1.5 text-xs font-bold text-destructive active:scale-95">
+                    <Ban className="h-3 w-3" /> Anular
+                  </button>
+                  <button onClick={borrarPedido} className="flex items-center gap-1 rounded-xl bg-destructive/10 px-3 py-1.5 text-xs font-bold text-destructive active:scale-95">
+                    <Trash2 className="h-3 w-3" /> Borrar
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-2 grid grid-cols-3 gap-1">
+                <button onClick={reimprimir} className="flex items-center justify-center gap-1 rounded-xl bg-secondary px-2 py-2 text-xs font-bold text-secondary-foreground active:scale-95">
+                  <Printer className="h-3 w-3" /> Ticket
+                </button>
+                <button onClick={imprimirComanda} className="flex items-center justify-center gap-1 rounded-xl bg-accent px-2 py-2 text-xs font-bold active:scale-95">
+                  <ChefHat className="h-3 w-3" /> Comanda
+                </button>
+                <button onClick={() => setShowSplit(true)} className="flex items-center justify-center gap-1 rounded-xl bg-primary px-2 py-2 text-xs font-bold text-primary-foreground active:scale-95">
+                  <Split className="h-3 w-3" /> Dividir
+                </button>
+                <button onClick={duplicar} className="flex items-center justify-center gap-1 rounded-xl bg-muted px-2 py-2 text-xs font-bold active:scale-95">
+                  <Copy className="h-3 w-3" /> Duplicar
+                </button>
+                <button onClick={cambiarDireccion} className="col-span-2 flex items-center justify-center gap-1 rounded-xl bg-muted px-2 py-2 text-xs font-bold active:scale-95">
+                  <MapPin className="h-3 w-3" /> Editar dirección
                 </button>
               </div>
 
@@ -416,6 +557,21 @@ function PedidosPage() {
           categorias={categorias}
           onClose={() => setShowAdd(false)}
           onPick={(p) => { setShowAdd(false); setEditando({ producto: p }); }}
+        />
+      )}
+
+      {showSplit && sel && (
+        <SplitPaymentDialog
+          pedidoId={sel.id}
+          numero={sel.numero}
+          items={items.map((i) => ({
+            id: i.id, nombre: i.nombre, cantidad: i.cantidad,
+            precio_unitario: Number(i.precio_unitario),
+            pagado: i.pagado, metodo_pago: i.metodo_pago,
+            modificaciones: i.modificaciones,
+          }))}
+          onClose={() => setShowSplit(false)}
+          onChanged={() => sel && cargarItems(sel.id)}
         />
       )}
     </div>
