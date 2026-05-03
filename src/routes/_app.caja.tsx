@@ -1,12 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { carrito, useCarrito, calcularTotal, calcularLinea, ItemCarrito, PRECIO_ENVIO_DOMICILIO, TipoPedido } from "@/lib/pos-store";
+import { carrito, useCarrito, calcularTotal, calcularLinea, ItemCarrito, getPrecioEnvio, TipoPedido } from "@/lib/pos-store";
 import { eur } from "@/lib/format";
 import { ModificadorDialog } from "@/components/ModificadorDialog";
 import { ClienteDialog } from "@/components/ClienteDialog";
 import { PagoDialog } from "@/components/PagoDialog";
-import { Trash2, User, Home, Bike, Plus, Minus, Pencil } from "lucide-react";
+import { Trash2, User, Home, Bike, Plus, Minus, Pencil, Bike as BikeIcon } from "lucide-react";
 
 export const Route = createFileRoute("/_app/caja")({
   component: CajaPage,
