@@ -37,27 +37,36 @@ export type Database = {
       }
       clientes: {
         Row: {
+          codigo_puerta: string | null
           created_at: string
           direccion: string | null
           id: string
           nombre: string
+          nota_reparto: string | null
           notas: string | null
+          piso: string | null
           telefono: string
         }
         Insert: {
+          codigo_puerta?: string | null
           created_at?: string
           direccion?: string | null
           id?: string
           nombre: string
+          nota_reparto?: string | null
           notas?: string | null
+          piso?: string | null
           telefono: string
         }
         Update: {
+          codigo_puerta?: string | null
           created_at?: string
           direccion?: string | null
           id?: string
           nombre?: string
+          nota_reparto?: string | null
           notas?: string | null
+          piso?: string | null
           telefono?: string
         }
         Relationships: []
@@ -91,8 +100,10 @@ export type Database = {
           cantidad: number
           created_at: string
           id: string
+          metodo_pago: string | null
           modificaciones: Json
           nombre: string
+          pagado: boolean
           pedido_id: string
           precio_unitario: number
           producto_id: string | null
@@ -101,8 +112,10 @@ export type Database = {
           cantidad?: number
           created_at?: string
           id?: string
+          metodo_pago?: string | null
           modificaciones?: Json
           nombre: string
+          pagado?: boolean
           pedido_id: string
           precio_unitario?: number
           producto_id?: string | null
@@ -111,8 +124,10 @@ export type Database = {
           cantidad?: number
           created_at?: string
           id?: string
+          metodo_pago?: string | null
           modificaciones?: Json
           nombre?: string
+          pagado?: boolean
           pedido_id?: string
           precio_unitario?: number
           producto_id?: string | null
@@ -136,45 +151,54 @@ export type Database = {
       }
       pedidos: {
         Row: {
+          ajuste: number
           cambio: number | null
           cliente_id: string | null
           created_at: string
+          descuento: number
           envio: number
           estado: string
           id: string
           metodo_pago: string | null
           notas: string | null
           numero: number
+          pagos_split: Json
           recibido: number | null
           subtotal: number
           tipo: string
           total: number
         }
         Insert: {
+          ajuste?: number
           cambio?: number | null
           cliente_id?: string | null
           created_at?: string
+          descuento?: number
           envio?: number
           estado?: string
           id?: string
           metodo_pago?: string | null
           notas?: string | null
           numero?: number
+          pagos_split?: Json
           recibido?: number | null
           subtotal?: number
           tipo?: string
           total?: number
         }
         Update: {
+          ajuste?: number
           cambio?: number | null
           cliente_id?: string | null
           created_at?: string
+          descuento?: number
           envio?: number
           estado?: string
           id?: string
           metodo_pago?: string | null
           notas?: string | null
           numero?: number
+          pagos_split?: Json
           recibido?: number | null
           subtotal?: number
           tipo?: string
