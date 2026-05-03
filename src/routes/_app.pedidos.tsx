@@ -117,7 +117,7 @@ function PedidosPage() {
     await supabase.from("pedidos").update({ subtotal, envio, total: subtotal + envio }).eq("id", pedidoId);
     const { data } = await supabase
       .from("pedidos")
-      .select("*, clientes(nombre, telefono)")
+      .select("*, clientes(nombre, telefono, direccion, piso, codigo_puerta, nota_reparto)")
       .eq("id", pedidoId)
       .single();
     if (data) setSel(data as unknown as Pedido);
@@ -188,7 +188,7 @@ function PedidosPage() {
     const subtotal = items.reduce((s, i) => s + lineaTotal(i), 0);
     await supabase.from("pedidos").update({ tipo, envio, total: subtotal + envio, subtotal }).eq("id", sel.id);
     cargarPedidos();
-    const { data } = await supabase.from("pedidos").select("*, clientes(nombre, telefono)").eq("id", sel.id).single();
+    const { data } = await supabase.from("pedidos").select("*, clientes(nombre, telefono, direccion, piso, codigo_puerta, nota_reparto)").eq("id", sel.id).single();
     if (data) setSel(data as unknown as Pedido);
   };
 
