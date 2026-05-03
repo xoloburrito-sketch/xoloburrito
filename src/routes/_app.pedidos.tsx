@@ -114,8 +114,7 @@ function PedidosPage() {
   const recalcularTotal = async (pedidoId: string, nuevosItems: Item[]) => {
     const subtotal = nuevosItems.reduce((s, i) => s + lineaTotal(i), 0);
     const envio = sel?.tipo === "domicilio" ? getPrecioEnvio() : 0;
-    const update: Record<string, unknown> = { subtotal, envio, total: subtotal + envio };
-    if (sel?.estado !== "anulado") update.estado = "modificado";
+    const update = { subtotal, envio, total: subtotal + envio, ...(sel?.estado !== "anulado" ? { estado: "modificado" } : {}) };
     await supabase.from("pedidos").update(update).eq("id", pedidoId);
     const { data } = await supabase
       .from("pedidos")
