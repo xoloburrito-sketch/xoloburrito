@@ -1,14 +1,17 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { eur, fechaCorta } from "@/lib/format";
 import {
   ChevronRight, Banknote, CreditCard, Bike, Home,
-  Trash2, Plus, Minus, Pencil, X,
+  Trash2, Plus, Minus, Pencil, X, Printer, ChefHat, Copy, Ban, Split, MapPin,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ModificadorDialog } from "@/components/ModificadorDialog";
+import { SplitPaymentDialog } from "@/components/SplitPaymentDialog";
 import type { Modificacion, ItemCarrito } from "@/lib/pos-store";
+import { ticketHTML, comandaCocinaHTML, printHTML } from "@/lib/ticket";
+import { getPrecioEnvio } from "@/lib/pos-store";
 
 export const Route = createFileRoute("/_app/pedidos")({
   component: PedidosPage,
