@@ -9,13 +9,19 @@ type Cliente = {
   telefono: string;
   nombre: string;
   direccion: string | null;
+  piso?: string | null;
+  codigo_puerta?: string | null;
+  nota_reparto?: string | null;
 };
 
 export function ClienteDialog({ onClose }: { onClose: () => void }) {
   const [busqueda, setBusqueda] = useState("");
   const [resultados, setResultados] = useState<Cliente[]>([]);
   const [modo, setModo] = useState<"buscar" | "crear">("buscar");
-  const [nuevo, setNuevo] = useState({ telefono: "", nombre: "", direccion: "" });
+  const [nuevo, setNuevo] = useState({
+    telefono: "", nombre: "", direccion: "",
+    piso: "", codigo_puerta: "", nota_reparto: "",
+  });
 
   useEffect(() => {
     const t = setTimeout(async () => {
@@ -46,6 +52,9 @@ export function ClienteDialog({ onClose }: { onClose: () => void }) {
         telefono: nuevo.telefono.trim(),
         nombre: nuevo.nombre.trim(),
         direccion: nuevo.direccion.trim() || null,
+        piso: nuevo.piso.trim() || null,
+        codigo_puerta: nuevo.codigo_puerta.trim() || null,
+        nota_reparto: nuevo.nota_reparto.trim() || null,
       })
       .select()
       .single();
@@ -99,6 +108,11 @@ export function ClienteDialog({ onClose }: { onClose: () => void }) {
                     <div className="font-bold">{c.nombre}</div>
                     <div className="text-sm text-muted-foreground">📞 {c.telefono}</div>
                     {c.direccion && <div className="text-xs text-muted-foreground">📍 {c.direccion}</div>}
+                    {(c.piso || c.codigo_puerta) && (
+                      <div className="text-xs text-muted-foreground">
+                        {c.piso && `🏠 ${c.piso}`} {c.codigo_puerta && `🔑 ${c.codigo_puerta}`}
+                      </div>
+                    )}
                   </div>
                 </button>
               ))}
@@ -109,32 +123,14 @@ export function ClienteDialog({ onClose }: { onClose: () => void }) {
           </div>
         ) : (
           <div className="flex-1 space-y-3 overflow-y-auto p-4">
-            <div>
-              <label className="mb-1 block text-sm font-bold">Teléfono *</label>
-              <input
-                value={nuevo.telefono}
-                onChange={(e) => setNuevo({ ...nuevo, telefono: e.target.value })}
-                inputMode="tel"
-                className="w-full rounded-xl border border-border bg-background p-4 text-lg"
-              />
+            <Field label="Teléfono *" v={nuevo.telefono} onChange={(v) => setNuevo({ ...nuevo, telefono: v })} mode="tel" />
+            <Field label="Nombre *" v={nuevo.nombre} onChange={(v) => setNuevo({ ...nuevo, nombre: v })} />
+            <Field label="Dirección" v={nuevo.direccion} onChange={(v) => setNuevo({ ...nuevo, direccion: v })} multiline />
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Piso / Puerta" v={nuevo.piso} onChange={(v) => setNuevo({ ...nuevo, piso: v })} />
+              <Field label="Código portal" v={nuevo.codigo_puerta} onChange={(v) => setNuevo({ ...nuevo, codigo_puerta: v })} />
             </div>
-            <div>
-              <label className="mb-1 block text-sm font-bold">Nombre *</label>
-              <input
-                value={nuevo.nombre}
-                onChange={(e) => setNuevo({ ...nuevo, nombre: e.target.value })}
-                className="w-full rounded-xl border border-border bg-background p-4 text-lg"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-bold">Dirección (para domicilio)</label>
-              <textarea
-                value={nuevo.direccion}
-                onChange={(e) => setNuevo({ ...nuevo, direccion: e.target.value })}
-                rows={2}
-                className="w-full rounded-xl border border-border bg-background p-4"
-              />
-            </div>
+            <Field label="Nota de reparto" v={nuevo.nota_reparto} onChange={(v) => setNuevo({ ...nuevo, nota_reparto: v })} multiline />
             <button
               onClick={crear}
               className="w-full rounded-2xl bg-primary py-4 text-lg font-black text-primary-foreground active:scale-95"
@@ -144,6 +140,23 @@ export function ClienteDialog({ onClose }: { onClose: () => void }) {
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function Field({ label, v, onChange, mode, multiline }: {
+  label: string; v: string; onChange: (v: string) => void; mode?: "tel" | "text"; multiline?: boolean;
+}) {
+  return (
+    <div>
+      <label className="mb-1 block text-sm font-bold">{label}</label>
+      {multiline ? (
+        <textarea value={v} onChange={(e) => onChange(e.target.value)} rows={2}
+          className="w-full rounded-xl border border-border bg-background p-3" />
+      ) : (
+        <input value={v} onChange={(e) => onChange(e.target.value)} inputMode={mode === "tel" ? "tel" : undefined}
+          className="w-full rounded-xl border border-border bg-background p-3 text-lg" />
+      )}
     </div>
   );
 }
