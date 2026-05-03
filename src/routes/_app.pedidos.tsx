@@ -113,7 +113,7 @@ function PedidosPage() {
 
   const recalcularTotal = async (pedidoId: string, nuevosItems: Item[]) => {
     const subtotal = nuevosItems.reduce((s, i) => s + lineaTotal(i), 0);
-    const envio = sel?.tipo === "domicilio" ? 2.5 : 0;
+    const envio = sel?.tipo === "domicilio" ? getPrecioEnvio() : 0;
     await supabase.from("pedidos").update({ subtotal, envio, total: subtotal + envio }).eq("id", pedidoId);
     const { data } = await supabase
       .from("pedidos")
@@ -184,7 +184,7 @@ function PedidosPage() {
 
   const cambiarTipo = async (tipo: "local" | "domicilio" | "glovo" | "just_eat") => {
     if (!sel) return;
-    const envio = tipo === "domicilio" ? 2.5 : 0;
+    const envio = tipo === "domicilio" ? getPrecioEnvio() : 0;
     const subtotal = items.reduce((s, i) => s + lineaTotal(i), 0);
     await supabase.from("pedidos").update({ tipo, envio, total: subtotal + envio, subtotal }).eq("id", sel.id);
     cargarPedidos();
