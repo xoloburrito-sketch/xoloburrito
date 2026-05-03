@@ -36,6 +36,9 @@ const lineaTotal = (i: Item) => {
   return (i.precio_unitario + ex) * i.cantidad;
 };
 
+const tipoLabel = (t: TipoPedido) =>
+  t === "local" ? "LOCAL" : t === "domicilio" ? "DOMICILIO" : t === "glovo" ? "GLOVO" : "JUST EAT";
+
 export function PagoDialog({
   estado,
   total: totalProductos,
