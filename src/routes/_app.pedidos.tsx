@@ -559,6 +559,21 @@ function PedidosPage() {
           onPick={(p) => { setShowAdd(false); setEditando({ producto: p }); }}
         />
       )}
+
+      {showSplit && sel && (
+        <SplitPaymentDialog
+          pedidoId={sel.id}
+          numero={sel.numero}
+          items={items.map((i) => ({
+            id: i.id, nombre: i.nombre, cantidad: i.cantidad,
+            precio_unitario: Number(i.precio_unitario),
+            pagado: i.pagado, metodo_pago: i.metodo_pago,
+            modificaciones: i.modificaciones,
+          }))}
+          onClose={() => setShowSplit(false)}
+          onChanged={() => sel && cargarItems(sel.id)}
+        />
+      )}
     </div>
   );
 }
