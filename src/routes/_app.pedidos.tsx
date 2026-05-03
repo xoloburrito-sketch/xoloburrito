@@ -209,10 +209,99 @@ function PedidosPage() {
   };
 
   const totalHoy = pedidos
-    .filter((p) => new Date(p.created_at).toDateString() === new Date().toDateString())
+    .filter((p) => new Date(p.created_at).toDateString() === new Date().toDateString() && p.estado !== "anulado")
     .reduce((s, p) => s + Number(p.total), 0);
 
   const totalActual = items.reduce((s, i) => s + lineaTotal(i), 0);
+
+  const pedidosFiltrados = useMemo(() => {
+    let arr = pedidos;
+    const hoy = new Date().toDateString();
+    if (filtro === "hoy") arr = arr.filter((p) => new Date(p.created_at).toDateString() === hoy);
+    else if (filtro === "anulados") arr = arr.filter((p) => p.estado === "anulado");
+    else if (filtro === "modificados") arr = arr.filter((p) => p.estado === "modificado");
+    else if (filtro === "glovo") arr = arr.filter((p) => p.tipo === "glovo");
+    else if (filtro === "just_eat") arr = arr.filter((p) => p.tipo === "just_eat");
+    if (busqClient.trim()) {
+      const q = busqClient.toLowerCase();
+      arr = arr.filter((p) =>
+        p.clientes?.nombre.toLowerCase().includes(q) ||
+        p.clientes?.telefono.includes(q) ||
+        String(p.numero).includes(q)
+      );
+    }
+    return arr;
+  }, [pedidos, filtro, busqClient]);
+
+  const reimprimir = async () => {
+    if (!sel) return;
+    const cli = sel.clientes ? {
+      nombre: sel.clientes.nombre, telefono: sel.clientes.telefono,
+      direccion: sel.clientes.direccion, piso: sel.clientes.piso,
+      codigo_puerta: sel.clientes.codigo_puerta, nota_reparto: sel.clientes.nota_reparto,
+    } : null;
+    printHTML(ticketHTML({
+      numero: sel.numero, created_at: sel.created_at, tipo: sel.tipo,
+      metodo_pago: sel.metodo_pago, subtotal: Number(sel.subtotal),
+      envio: Number(sel.envio || 0), descuento: Number(sel.descuento || 0),
+      total: Number(sel.total), recibido: sel.recibido, cambio: sel.cambio,
+      cliente: cli, notas: sel.notas,
+    }, items), `Ticket #${sel.numero}`);
+  };
+
+  const imprimirComanda = () => {
+    if (!sel) return;
+    printHTML(comandaCocinaHTML({ numero: sel.numero, tipo: sel.tipo, created_at: sel.created_at }, items), `Comanda #${sel.numero}`);
+  };
+
+  const duplicar = async () => {
+    if (!sel) return;
+    if (!confirm(`¿Duplicar pedido #${sel.numero}?`)) return;
+    const { data: nuevo, error } = await supabase.from("pedidos").insert({
+      cliente_id: sel.cliente_id, tipo: sel.tipo, estado: "pendiente",
+      subtotal: sel.subtotal, envio: sel.envio, total: sel.total, notas: sel.notas,
+    }).select().single();
+    if (error || !nuevo) { toast.error(error?.message || "Error"); return; }
+    const copia = items.map((i) => ({
+      pedido_id: nuevo.id, producto_id: i.producto_id, nombre: i.nombre,
+      cantidad: i.cantidad, precio_unitario: i.precio_unitario,
+      modificaciones: i.modificaciones as never,
+    }));
+    if (copia.length) await supabase.from("items_pedido").insert(copia);
+    toast.success(`Pedido #${nuevo.numero} duplicado`);
+    cargarPedidos();
+  };
+
+  const anular = async () => {
+    if (!sel) return;
+    if (!confirm(`¿Anular pedido #${sel.numero}? Quedará marcado como anulado.`)) return;
+    await supabase.from("pedidos").update({ estado: "anulado" }).eq("id", sel.id);
+    toast.success(`Pedido #${sel.numero} anulado`);
+    setSel({ ...sel, estado: "anulado" });
+    cargarPedidos();
+  };
+
+  const cambiarDireccion = async () => {
+    if (!sel?.cliente_id || !sel.clientes) { toast.error("Pedido sin cliente"); return; }
+    const dir = prompt("Nueva dirección:", sel.clientes.direccion || "");
+    if (dir == null) return;
+    const piso = prompt("Piso / Puerta:", sel.clientes.piso || "");
+    if (piso == null) return;
+    const cod = prompt("Código portal:", sel.clientes.codigo_puerta || "");
+    if (cod == null) return;
+    const nota = prompt("Nota de reparto:", sel.clientes.nota_reparto || "");
+    if (nota == null) return;
+    await supabase.from("clientes").update({
+      direccion: dir.trim() || null,
+      piso: piso.trim() || null,
+      codigo_puerta: cod.trim() || null,
+      nota_reparto: nota.trim() || null,
+    }).eq("id", sel.cliente_id);
+    toast.success("Dirección actualizada");
+    cargarPedidos();
+    const { data } = await supabase.from("pedidos").select(SELECT_PEDIDO).eq("id", sel.id).single();
+    if (data) setSel(data as unknown as Pedido);
+  };
 
   // convierte Item -> ItemCarrito para reusar el dialog
   const itemToCarrito = (it: Item): ItemCarrito => ({
