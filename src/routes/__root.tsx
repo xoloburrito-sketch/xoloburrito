@@ -1,5 +1,6 @@
 import { Outlet, Link, createRootRoute, HeadContent, Scripts } from "@tanstack/react-router";
 import { Toaster } from "sonner";
+import { AppErrorBoundary } from "@/components/AppErrorBoundary";
 
 import appCss from "../styles.css?url";
 
@@ -55,12 +56,14 @@ export const Route = createRootRoute({
 
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="es" translate="no" className="notranslate">
       <head>
+        <meta name="google" content="notranslate" />
         <HeadContent />
       </head>
-      <body>
+      <body translate="no" className="notranslate">
         {children}
+        <div id="modal-root" />
         <Scripts />
       </body>
     </html>
@@ -69,9 +72,9 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   return (
-    <>
+    <AppErrorBoundary>
       <Outlet />
       <Toaster position="top-center" richColors />
-    </>
+    </AppErrorBoundary>
   );
 }
