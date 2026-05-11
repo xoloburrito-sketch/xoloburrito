@@ -1,11 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { eur } from "@/lib/format";
 import { toast } from "sonner";
 import {
   Banknote, CreditCard, Bike, Home, Calculator, Printer, RefreshCw,
-  Trash2, Pencil, Check, X, Plus, Minus, Play, Square,
+  Trash2, Pencil, Check, X, Plus, Minus, Play, Square, BarChart3,
 } from "lucide-react";
 import {
   iniciarTurno, cerrarTurnoActivo, useTurnoActivo, turnoLabel,
