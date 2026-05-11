@@ -44,8 +44,8 @@ function AppLayout() {
       </div>
       <div className="flex flex-1 overflow-hidden">
       <aside className="flex w-24 flex-col items-center gap-2 bg-sidebar py-4 text-sidebar-foreground sm:w-28">
-        <div className="mb-2 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-2xl font-black text-primary-foreground shadow-lg">
-          🌯
+        <div className="mb-2 flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl bg-white p-1 shadow-lg">
+          <img src="/xolo-logo.jpeg" alt="Xölo" className="h-full w-full object-contain" />
         </div>
         {nav.map(({ to, label, Icon }) => {
           const active = loc.pathname.startsWith(to);

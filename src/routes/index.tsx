@@ -40,10 +40,10 @@ function PinPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-secondary p-4 text-secondary-foreground">
       <div className="w-full max-w-sm text-center">
-        <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-3xl bg-primary text-4xl shadow-2xl">
-          🌯
+        <div className="mx-auto mb-4 flex h-24 w-24 items-center justify-center overflow-hidden rounded-3xl bg-white p-2 shadow-2xl">
+          <img src="/xolo-logo.jpeg" alt="Xölo Burritos" className="h-full w-full object-contain" />
         </div>
-        <h1 className="text-3xl font-black tracking-tight">POS Burritos</h1>
+        <h1 className="text-3xl font-black tracking-tight">XÖLO BURRITOS</h1>
         <p className="mt-2 text-sm text-secondary-foreground/60">Introduce tu PIN para entrar</p>
 
         <div className={`my-8 flex justify-center gap-3 ${error ? "animate-pulse" : ""}`}>
