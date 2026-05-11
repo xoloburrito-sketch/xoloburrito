@@ -294,14 +294,33 @@ body{font-family:'Consolas','Lucida Console','Courier New',monospace;font-size:1
             <>
               <div className="rounded-2xl bg-muted p-4">
                 <div className="flex items-center justify-between">
-                  <div className="text-xs font-bold uppercase text-muted-foreground">Recibido</div>
+                  <div className="text-xs font-bold uppercase text-muted-foreground">💵 Efectivo recibido</div>
                   <button onClick={limpiar} className="text-xs font-bold text-muted-foreground underline">Limpiar</button>
                 </div>
                 <div className="text-3xl font-black">{eur(recibidoNum)}</div>
                 <div className="mt-2 flex justify-between text-sm">
-                  <span className="text-muted-foreground">Cambio</span>
-                  <span className="text-2xl font-black text-success">{eur(cambio)}</span>
+                  <span className="text-muted-foreground">{recibidoNum >= total ? "Cambio" : "Faltan"}</span>
+                  <span className={`text-2xl font-black ${recibidoNum >= total ? "text-success" : "text-destructive"}`}>
+                    {eur(recibidoNum >= total ? cambio : (total - recibidoNum))}
+                  </span>
                 </div>
+              </div>
+
+              <div>
+                <div className="mb-1 text-xs font-bold uppercase text-muted-foreground">Billetes rápidos</div>
+                <div className="grid grid-cols-5 gap-2">
+                  {[5, 10, 20, 50, 100].map((b) => (
+                    <button
+                      key={b}
+                      onClick={() => setRecibido(String((parseFloat(recibido.replace(",", ".")) || 0) + b))}
+                      className="rounded-2xl bg-secondary py-3 text-base font-black text-secondary-foreground active:scale-95"
+                    >+{b}€</button>
+                  ))}
+                </div>
+                <button
+                  onClick={() => setRecibido(String(total.toFixed(2)))}
+                  className="mt-2 w-full rounded-2xl bg-accent py-2 text-sm font-bold active:scale-95"
+                >Importe exacto · {eur(total)}</button>
               </div>
 
               <div className="grid grid-cols-3 gap-2">
