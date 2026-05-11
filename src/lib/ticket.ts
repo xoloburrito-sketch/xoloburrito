@@ -84,10 +84,25 @@ const lineaTotal = (i: ItemTicket) => {
   return (Number(i.precio_unitario) + ex) * i.cantidad;
 };
 
+function logoTag() {
+  const a = getAjustes();
+  if (!a.mostrarLogo) return "";
+  const src = a.logoBase64 || `${typeof window !== "undefined" ? window.location.origin : ""}/xolo-logo.jpeg`;
+  return `<img class="t-logo" src="${src}" alt="logo" />`;
+}
+
+function negocioLines() {
+  const a = getAjustes();
+  const parts = [a.direccionNegocio, a.telefonoNegocio, a.cifNegocio ? `CIF: ${a.cifNegocio}` : ""].filter(Boolean);
+  return parts.length ? `<div class="t-sub">${parts.join(" · ")}</div>` : "";
+}
+
 export function ticketHTML(p: PedidoTicket, items: ItemTicket[]) {
   const a = getAjustes();
   return `
+${logoTag()}
 <div class="t-title">${a.ticketHeader}</div>
+${negocioLines()}
 <div class="t-sub">Pedido #${p.numero}<br/>${new Date(p.created_at).toLocaleString("es-ES")}</div>
 <div class="t-sep"></div>
 <div style="font-weight:800">** ${tipoLabel(p.tipo)} **</div>
