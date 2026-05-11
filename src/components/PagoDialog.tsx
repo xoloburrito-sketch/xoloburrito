@@ -4,7 +4,7 @@ import { eur } from "@/lib/format";
 import { X, Printer, Calculator, Banknote, CreditCard, Bike } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { ticketHTML, printHTML, TICKET_CSS } from "@/lib/ticket";
+import { ticketHTML, comandaCocinaHTML, printHTML, printTicket3Copias, TICKET_CSS } from "@/lib/ticket";
 
 type Item = {
   uid: string;
@@ -29,7 +29,7 @@ type Estado = {
   envio_override?: number | null;
 };
 
-type Metodo = "efectivo" | "tarjeta" | "glovo" | "just_eat";
+type Metodo = "efectivo" | "tarjeta" | "glovo" | "just_eat" | "uber_eats";
 
 const lineaTotal = (i: Item) => {
   const ex = i.modificaciones.extras.reduce((s, e) => s + e.precio, 0);
@@ -37,7 +37,7 @@ const lineaTotal = (i: Item) => {
 };
 
 const tipoLabel = (t: TipoPedido) =>
-  t === "local" ? "LOCAL" : t === "domicilio" ? "DOMICILIO" : t === "glovo" ? "GLOVO" : "JUST EAT";
+  t === "local" ? "LOCAL" : t === "domicilio" ? "DOMICILIO" : t === "glovo" ? "GLOVO" : t === "just_eat" ? "JUST EAT" : "UBER EATS";
 
 export function PagoDialog({
   estado,
@@ -56,7 +56,10 @@ export function PagoDialog({
 
   // Si es plataforma, método por defecto coincide
   const metodoInicial: Metodo =
-    estado.tipo === "glovo" ? "glovo" : estado.tipo === "just_eat" ? "just_eat" : "efectivo";
+    estado.tipo === "glovo" ? "glovo"
+    : estado.tipo === "just_eat" ? "just_eat"
+    : estado.tipo === "uber_eats" ? "uber_eats"
+    : "efectivo";
 
   const [metodo, setMetodo] = useState<Metodo>(metodoInicial);
   const [recibido, setRecibido] = useState<string>("");
