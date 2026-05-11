@@ -36,14 +36,24 @@ export type CierreTurno = TurnoActivo & {
   resumen: ResumenTurno;
 };
 
+function safeParse<T>(raw: string | null, fallback: T): T {
+  if (!raw) return fallback;
+  try {
+    const v = JSON.parse(raw);
+    return (v ?? fallback) as T;
+  } catch {
+    return fallback;
+  }
+}
+
 export function getTurnoActivo(): TurnoActivo | null {
   if (typeof window === "undefined") return null;
-  try {
-    const r = localStorage.getItem(KEY_ACTIVO);
-    return r ? (JSON.parse(r) as TurnoActivo) : null;
-  } catch {
+  const v = safeParse<TurnoActivo | null>(localStorage.getItem(KEY_ACTIVO), null);
+  if (!v || typeof v !== "object" || !v.turno || !v.inicio) {
+    try { localStorage.removeItem(KEY_ACTIVO); } catch { /* noop */ }
     return null;
   }
+  return v;
 }
 
 export function iniciarTurno(t: TurnoNombre): TurnoActivo {
@@ -59,7 +69,7 @@ export function cerrarTurnoActivo(resumen: ResumenTurno): CierreTurno | null {
   const cierre: CierreTurno = { ...a, fin: new Date().toISOString(), resumen };
   const hist = getHistorialTurnos();
   hist.unshift(cierre);
-  localStorage.setItem(KEY_HIST, JSON.stringify(hist.slice(0, 365)));
+  try { localStorage.setItem(KEY_HIST, JSON.stringify(hist.slice(0, 365))); } catch { /* noop */ }
   localStorage.removeItem(KEY_ACTIVO);
   window.dispatchEvent(new Event("pos:turno"));
   return cierre;
@@ -67,11 +77,13 @@ export function cerrarTurnoActivo(resumen: ResumenTurno): CierreTurno | null {
 
 export function getHistorialTurnos(): CierreTurno[] {
   if (typeof window === "undefined") return [];
-  try {
-    return JSON.parse(localStorage.getItem(KEY_HIST) || "[]") as CierreTurno[];
-  } catch {
+  const v = safeParse<unknown>(localStorage.getItem(KEY_HIST), []);
+  if (!Array.isArray(v)) {
+    try { localStorage.removeItem(KEY_HIST); } catch { /* noop */ }
     return [];
   }
+  // Filtra entradas malformadas para evitar crashes en map/render
+  return (v as CierreTurno[]).filter((c) => c && typeof c === "object" && c.turno && c.inicio && c.fin && c.resumen);
 }
 
 export function borrarHistorialTurnos() {

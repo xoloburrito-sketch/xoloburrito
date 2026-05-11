@@ -51,7 +51,7 @@ function CajaPage() {
 
   const totalProductos = calcularTotal(estado.items);
   const envioDefault = estado.tipo === "domicilio" ? getPrecioEnvio() : 0;
-  const envio = estado.envio_override !== null ? estado.envio_override : envioDefault;
+  const envio = estado.envio_override !== null && estado.envio_override !== undefined ? estado.envio_override : envioDefault;
   const total = totalProductos + envio;
   const productosFiltrados = productos.filter((p) => p.categoria_id === catActiva);
 
