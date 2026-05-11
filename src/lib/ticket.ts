@@ -143,6 +143,7 @@ export type CierreData = {
   tarjeta: number;
   glovo: number;
   just_eat: number;
+  uber_eats: number;
   envios: number;
   descuentos: number;
   ajustes: number;
@@ -166,6 +167,7 @@ export function cierreHTML(c: CierreData) {
 <div class="t-row"><span>Ventas tarjeta</span><span>${eur(c.tarjeta)}</span></div>
 <div class="t-row"><span>Ventas Glovo</span><span>${eur(c.glovo)}</span></div>
 <div class="t-row"><span>Ventas Just Eat</span><span>${eur(c.just_eat)}</span></div>
+<div class="t-row"><span>Ventas Uber Eats</span><span>${eur(c.uber_eats)}</span></div>
 <div class="t-sep"></div>
 <div class="t-row"><span>Local</span><span>${eur(c.local)}</span></div>
 <div class="t-row"><span>Domicilio</span><span>${eur(c.domicilio)}</span></div>
