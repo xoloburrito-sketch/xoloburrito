@@ -6,6 +6,7 @@ import { eur } from "@/lib/format";
 import { ModificadorDialog } from "@/components/ModificadorDialog";
 import { ClienteDialog } from "@/components/ClienteDialog";
 import { PagoDialog } from "@/components/PagoDialog";
+import { CobrarErrorBoundary } from "@/components/CobrarErrorBoundary";
 import { Trash2, User, Home, Bike, Plus, Minus, Pencil, Bike as BikeIcon } from "lucide-react";
 import { beepAdd } from "@/lib/sonidos";
 
@@ -33,6 +34,8 @@ function CajaPage() {
   const [editando, setEditando] = useState<{ producto: Producto; item?: ItemCarrito } | null>(null);
   const [showCliente, setShowCliente] = useState(false);
   const [showPago, setShowPago] = useState(false);
+  const [cobroKey, setCobroKey] = useState(0);
+  const abrirPago = () => { setCobroKey((k) => k + 1); setShowPago(true); };
   const [tabMovil, setTabMovil] = useState<"menu" | "pedido">("menu");
 
   useEffect(() => {
@@ -262,7 +265,7 @@ function CajaPage() {
               Vaciar
             </button>
             <button
-              onClick={() => setShowPago(true)}
+              onClick={abrirPago}
               disabled={estado.items.length === 0}
               className="rounded-2xl bg-primary py-4 text-lg font-black text-primary-foreground shadow-lg active:scale-95 disabled:opacity-40"
               style={{ minHeight: 56 }}
@@ -276,7 +279,7 @@ function CajaPage() {
       {/* FAB Cobrar visible en móvil en tab Menú */}
       {tabMovil === "menu" && estado.items.length > 0 && (
         <button
-          onClick={() => setShowPago(true)}
+          onClick={abrirPago}
           className="lg:hidden fixed left-3 right-3 z-30 rounded-2xl bg-primary px-4 py-4 text-base font-black text-primary-foreground shadow-2xl active:scale-95 flex items-center justify-between gap-3"
           style={{ bottom: `calc(72px + env(safe-area-inset-bottom))`, minHeight: 60 }}
         >
@@ -315,12 +318,15 @@ function CajaPage() {
       {showCliente && <ClienteDialog onClose={() => setShowCliente(false)} />}
 
       {showPago && (
-        <PagoDialog
-          estado={estado}
-          total={totalProductos}
-          onClose={() => setShowPago(false)}
-          onPagado={() => { carrito.clear(); setShowPago(false); }}
-        />
+        <CobrarErrorBoundary key={cobroKey} onReset={() => { setShowPago(false); setCobroKey((k) => k + 1); }}>
+          <PagoDialog
+            key={cobroKey}
+            estado={estado}
+            total={totalProductos}
+            onClose={() => setShowPago(false)}
+            onPagado={() => { carrito.clear(); setShowPago(false); }}
+          />
+        </CobrarErrorBoundary>
       )}
     </div>
   );

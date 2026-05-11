@@ -1,6 +1,6 @@
 import { Link, Outlet, useLocation, useNavigate, createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ShoppingCart, Users, ListOrdered, Settings, LogOut, UtensilsCrossed, Calculator } from "lucide-react";
+import { ShoppingCart, Users, ListOrdered, Settings, LogOut, UtensilsCrossed, Calculator, BarChart3 } from "lucide-react";
 import { estaAutenticado, cerrarSesion } from "@/lib/pin";
 import { useTurnoActivo, turnoLabel } from "@/lib/turnos";
 import { aplicarTema, getAjustes } from "@/lib/ajustes";
@@ -13,6 +13,7 @@ const nav = [
   { to: "/caja", label: "Caja", Icon: ShoppingCart },
   { to: "/pedidos", label: "Pedidos", Icon: ListOrdered },
   { to: "/cierre", label: "Cierre", Icon: Calculator },
+  { to: "/estadisticas", label: "Stats", Icon: BarChart3 },
   { to: "/clientes", label: "Clientes", Icon: Users },
   { to: "/menu", label: "Menú", Icon: UtensilsCrossed },
   { to: "/ajustes", label: "Ajustes", Icon: Settings },

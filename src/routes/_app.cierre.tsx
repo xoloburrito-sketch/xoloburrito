@@ -49,12 +49,22 @@ const lineaTotal = (i: Item) => {
 
 function CierrePage() {
   const [fecha, setFecha] = useState<string>(hoyISO());
+  const [ahora, setAhora] = useState<Date>(new Date());
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [loading, setLoading] = useState(false);
   const [expandido, setExpandido] = useState<string | null>(null);
   const [items, setItems] = useState<Item[]>([]);
   const [editTotal, setEditTotal] = useState<{ id: string; valor: string } | null>(null);
   const [editPrecio, setEditPrecio] = useState<{ id: string; valor: string } | null>(null);
+
+  // Reloj y fecha en vivo: actualiza cada minuto y al recibir foco
+  useEffect(() => {
+    const tick = () => { setAhora(new Date()); setFecha(hoyISO()); };
+    const id = setInterval(tick, 60_000);
+    const onFocus = () => tick();
+    window.addEventListener("focus", onFocus);
+    return () => { clearInterval(id); window.removeEventListener("focus", onFocus); };
+  }, []);
 
   const cargar = useCallback(async (f: string) => {
     setLoading(true);
@@ -285,9 +295,23 @@ function CierrePage() {
     <div className="h-full overflow-y-auto p-4">
       <div className="mx-auto max-w-3xl space-y-4">
         <div className="no-print flex flex-wrap items-center justify-between gap-3">
-          <h1 className="flex items-center gap-2 text-3xl font-black">
-            <Calculator className="h-7 w-7 text-primary" /> Cierre de jornada
-          </h1>
+          <div>
+            <h1 className="flex items-center gap-2 text-3xl font-black">
+              <Calculator className="h-7 w-7 text-primary" /> Cierre de jornada
+            </h1>
+            <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+              <span className="capitalize">
+                {ahora.toLocaleDateString("es-ES", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+              </span>
+              <span>·</span>
+              <span className="font-mono font-bold">
+                {ahora.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}
+              </span>
+              <span className="ml-1 inline-flex items-center gap-1 rounded-full bg-success/15 px-2 py-0.5 text-[10px] font-bold text-success">
+                <span className="h-2 w-2 animate-pulse rounded-full bg-success" /> En directo
+              </span>
+            </div>
+          </div>
           <div className="flex items-center gap-2">
             <input
               type="date"

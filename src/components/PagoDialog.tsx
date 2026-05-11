@@ -187,7 +187,7 @@ body{font-family:'Consolas','Lucida Console','Courier New',monospace;font-size:1
   // ===== Ticket post-pago =====
   if (pedidoOk) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-2 sm:p-4">
+      <div translate="no" className="notranslate fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-2 sm:p-4">
         <div className="flex max-h-[95vh] w-full max-w-md flex-col overflow-hidden rounded-3xl bg-card shadow-2xl">
           <div className="no-print flex items-center justify-between border-b border-border p-4">
             <h2 className="text-xl font-black text-success">✓ Cobrado #{pedidoOk.numero}</h2>
@@ -266,7 +266,7 @@ body{font-family:'Consolas','Lucida Console','Courier New',monospace;font-size:1
 
   // ===== Pantalla de cobro =====
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-2 sm:items-center sm:p-4" onClick={onClose}>
+    <div translate="no" className="notranslate fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-2 sm:items-center sm:p-4" onClick={onClose}>
       <div className="flex max-h-[95vh] w-full max-w-2xl flex-col rounded-3xl bg-card shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b border-border p-5">
           <h2 className="text-2xl font-black flex items-center gap-2"><Calculator className="h-6 w-6 text-primary" /> Cobrar</h2>
