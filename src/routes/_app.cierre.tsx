@@ -208,22 +208,49 @@ function CierrePage() {
   const turnoActivo = useTurnoActivo();
   const [showIniciar, setShowIniciar] = useState(false);
   const [resumenCierre, setResumenCierre] = useState<{ resumen: ResumenTurno; inicio: string; fin: string; turno: TurnoNombre } | null>(null);
+  const [efectivoReal, setEfectivoReal] = useState<string>("");
   const historial = getHistorialTurnos();
 
-  const calcularResumenTurno = (): ResumenTurno => {
+  const calcularResumenTurno = async (): Promise<ResumenTurno> => {
     const inicio = turnoActivo ? new Date(turnoActivo.inicio).getTime() : 0;
     const desde = pedidos.filter((p) => new Date(p.created_at).getTime() >= inicio);
     const sum = (arr: typeof pedidos) => arr.reduce((s, p) => s + Number(p.total), 0);
     const sumBy = (k: string) => sum(desde.filter((p) => p.metodo_pago === k));
+    const sumTipo = (k: string) => sum(desde.filter((p) => p.tipo === k));
+
+    // Top productos del turno (consulta items)
+    let top_productos: { nombre: string; unidades: number; total: number }[] = [];
+    if (desde.length) {
+      const ids = desde.map((p) => p.id);
+      const { data } = await supabase.from("items_pedido").select("nombre,cantidad,precio_unitario,modificaciones").in("pedido_id", ids);
+      const map = new Map<string, { unidades: number; total: number }>();
+      for (const it of (data as Item[] | null) || []) {
+        const cur = map.get(it.nombre) || { unidades: 0, total: 0 };
+        cur.unidades += it.cantidad;
+        cur.total += lineaTotal(it);
+        map.set(it.nombre, cur);
+      }
+      top_productos = [...map.entries()].map(([nombre, v]) => ({ nombre, ...v })).sort((a, b) => b.unidades - a.unidades).slice(0, 10);
+    }
+
+    const efectivo = sumBy("efectivo");
+    const efectivo_real = parseFloat(efectivoReal.replace(",", ".")) || 0;
     return {
       pedidos: desde.length,
       total: sum(desde),
-      efectivo: sumBy("efectivo"),
+      efectivo,
       tarjeta: sumBy("tarjeta"),
       glovo: sumBy("glovo"),
       just_eat: sumBy("just_eat"),
       uber_eats: sumBy("uber_eats"),
       envios: desde.reduce((s, p) => s + Number(p.envio || 0), 0),
+      local: sumTipo("local"),
+      domicilio: sumTipo("domicilio"),
+      anulados: 0,
+      ticket_medio: desde.length ? sum(desde) / desde.length : 0,
+      top_productos,
+      efectivo_real: efectivoReal ? efectivo_real : undefined,
+      diferencia: efectivoReal ? (efectivo_real - efectivo) : undefined,
     };
   };
 
@@ -233,16 +260,26 @@ function CierrePage() {
     toast.success(`▶ Turno ${turnoLabel(t)} iniciado`);
   };
 
-  const onCerrar = () => {
+  const onCerrar = async () => {
     if (!turnoActivo) return;
     if (!confirm(`¿Cerrar turno ${turnoLabel(turnoActivo.turno)}?`)) return;
-    const resumen = calcularResumenTurno();
+    const resumen = await calcularResumenTurno();
     const c = cerrarTurnoActivo(resumen);
     if (c) {
       setResumenCierre({ resumen, inicio: c.inicio, fin: c.fin, turno: c.turno });
+      setEfectivoReal("");
       toast.success("⏹ Turno cerrado y archivado");
     }
   };
+
+  const efectivoTeorico = useMemo(() => {
+    if (!turnoActivo) return stats.efectivo;
+    const inicio = new Date(turnoActivo.inicio).getTime();
+    return pedidos.filter((p) => new Date(p.created_at).getTime() >= inicio && p.metodo_pago === "efectivo")
+      .reduce((s, p) => s + Number(p.total), 0);
+  }, [pedidos, turnoActivo, stats.efectivo]);
+  const efectivoRealNum = parseFloat(efectivoReal.replace(",", ".")) || 0;
+  const diferencia = efectivoRealNum - efectivoTeorico;
 
   return (
     <div className="h-full overflow-y-auto p-4">
