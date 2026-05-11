@@ -177,7 +177,8 @@ body{font-family:'Consolas','Lucida Console','Courier New',monospace;font-size:1
           </div>
           <div className="flex-1 overflow-y-auto bg-muted p-4">
             <div ref={ticketRef} className="ticket-print mx-auto rounded-xl">
-              <div className="ticket-title">XOLO BURRITO</div>
+              <img src="/xolo-logo.jpeg" alt="Xolo" style={{ display: "block", margin: "0 auto 6px", maxWidth: "60mm", maxHeight: "22mm", objectFit: "contain" }} />
+              <div className="ticket-title">XÖLO BURRITOS</div>
               <div className="ticket-sub">
                 Pedido #{pedidoOk.numero}<br />
                 {new Date(pedidoOk.fecha).toLocaleString("es-ES")}

@@ -6,6 +6,7 @@ export const TICKET_CSS = `
 @page { size: 80mm auto; margin: 0; }
 html,body{margin:0;padding:0;background:#fff;color:#000}
 body{font-family:'Consolas','Lucida Console','Courier New',monospace;font-size:13px;font-weight:600;line-height:1.35;width:72mm;padding:3mm 4mm;letter-spacing:.01em;color:#000}
+.t-logo{display:block;margin:0 auto 4px;max-width:48mm;max-height:22mm;object-fit:contain;filter:contrast(1.2)}
 .t-title{font-size:18px;font-weight:900;text-align:center;letter-spacing:.05em;margin-bottom:4px}
 .t-sub{text-align:center;font-size:12px;margin-bottom:6px}
 .t-sep{border-top:1px dashed #000;margin:6px 0}
@@ -83,10 +84,25 @@ const lineaTotal = (i: ItemTicket) => {
   return (Number(i.precio_unitario) + ex) * i.cantidad;
 };
 
+function logoTag() {
+  const a = getAjustes();
+  if (!a.mostrarLogo) return "";
+  const src = a.logoBase64 || `${typeof window !== "undefined" ? window.location.origin : ""}/xolo-logo.jpeg`;
+  return `<img class="t-logo" src="${src}" alt="logo" />`;
+}
+
+function negocioLines() {
+  const a = getAjustes();
+  const parts = [a.direccionNegocio, a.telefonoNegocio, a.cifNegocio ? `CIF: ${a.cifNegocio}` : ""].filter(Boolean);
+  return parts.length ? `<div class="t-sub">${parts.join(" · ")}</div>` : "";
+}
+
 export function ticketHTML(p: PedidoTicket, items: ItemTicket[]) {
   const a = getAjustes();
   return `
+${logoTag()}
 <div class="t-title">${a.ticketHeader}</div>
+${negocioLines()}
 <div class="t-sub">Pedido #${p.numero}<br/>${new Date(p.created_at).toLocaleString("es-ES")}</div>
 <div class="t-sep"></div>
 <div style="font-weight:800">** ${tipoLabel(p.tipo)} **</div>
@@ -160,7 +176,9 @@ export type CierreData = {
 export function cierreHTML(c: CierreData) {
   const a = getAjustes();
   return `
+${logoTag()}
 <div class="t-title">${a.ticketHeader}</div>
+${negocioLines()}
 <div class="t-sub">CIERRE DE JORNADA<br/>${c.fecha} · ${new Date().toLocaleTimeString("es-ES")}</div>
 <div class="t-sep"></div>
 <div class="t-row"><span>Ventas efectivo</span><span>${eur(c.efectivo)}</span></div>
