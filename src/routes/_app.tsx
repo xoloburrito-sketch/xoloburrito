@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { ShoppingCart, Users, ListOrdered, Settings, LogOut, UtensilsCrossed, Calculator } from "lucide-react";
 import { estaAutenticado, cerrarSesion } from "@/lib/pin";
 import { useTurnoActivo, turnoLabel } from "@/lib/turnos";
+import { aplicarTema, getAjustes } from "@/lib/ajustes";
 
 export const Route = createFileRoute("/_app")({
   component: AppLayout,
@@ -24,6 +25,7 @@ function AppLayout() {
   const turno = useTurnoActivo();
 
   useEffect(() => {
+    aplicarTema(getAjustes().tema);
     if (!estaAutenticado()) navigate({ to: "/" });
     else setReady(true);
   }, [navigate]);
