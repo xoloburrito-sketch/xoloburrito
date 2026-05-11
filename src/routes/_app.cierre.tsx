@@ -49,12 +49,22 @@ const lineaTotal = (i: Item) => {
 
 function CierrePage() {
   const [fecha, setFecha] = useState<string>(hoyISO());
+  const [ahora, setAhora] = useState<Date>(new Date());
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [loading, setLoading] = useState(false);
   const [expandido, setExpandido] = useState<string | null>(null);
   const [items, setItems] = useState<Item[]>([]);
   const [editTotal, setEditTotal] = useState<{ id: string; valor: string } | null>(null);
   const [editPrecio, setEditPrecio] = useState<{ id: string; valor: string } | null>(null);
+
+  // Reloj y fecha en vivo: actualiza cada minuto y al recibir foco
+  useEffect(() => {
+    const tick = () => { setAhora(new Date()); setFecha(hoyISO()); };
+    const id = setInterval(tick, 60_000);
+    const onFocus = () => tick();
+    window.addEventListener("focus", onFocus);
+    return () => { clearInterval(id); window.removeEventListener("focus", onFocus); };
+  }, []);
 
   const cargar = useCallback(async (f: string) => {
     setLoading(true);
