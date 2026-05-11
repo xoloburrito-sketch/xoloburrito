@@ -59,6 +59,7 @@ function CajaPage() {
     { k: "domicilio", label: "Domicilio", Icon: Bike },
     { k: "glovo", label: "Glovo", Icon: Bike },
     { k: "just_eat", label: "Just Eat", Icon: Bike },
+    { k: "uber_eats", label: "🛵 Uber Eats", Icon: Bike },
   ];
 
   const onClickProducto = (p: Producto) => setEditando({ producto: p });
@@ -106,7 +107,7 @@ function CajaPage() {
       {/* Derecha: carrito */}
       <aside className="flex h-full flex-col overflow-hidden rounded-3xl bg-card shadow-sm">
         <div className="space-y-2 border-b border-border p-3">
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 gap-2">
             {TIPOS.map(({ k, label, Icon }) => (
               <button
                 key={k}
