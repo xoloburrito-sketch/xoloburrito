@@ -6,6 +6,7 @@ export const TICKET_CSS = `
 @page { size: 80mm auto; margin: 0; }
 html,body{margin:0;padding:0;background:#fff;color:#000}
 body{font-family:'Consolas','Lucida Console','Courier New',monospace;font-size:13px;font-weight:600;line-height:1.35;width:72mm;padding:3mm 4mm;letter-spacing:.01em;color:#000}
+.t-logo{display:block;margin:0 auto 4px;max-width:48mm;max-height:22mm;object-fit:contain;filter:contrast(1.2)}
 .t-title{font-size:18px;font-weight:900;text-align:center;letter-spacing:.05em;margin-bottom:4px}
 .t-sub{text-align:center;font-size:12px;margin-bottom:6px}
 .t-sep{border-top:1px dashed #000;margin:6px 0}
