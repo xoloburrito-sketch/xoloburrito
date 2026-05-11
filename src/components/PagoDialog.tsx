@@ -156,8 +156,8 @@ export function PagoDialog({
     }));
     const comanda = comandaCocinaHTML({ numero: pedidoOk.numero, tipo: estado.tipo, created_at: pedidoOk.fecha }, itemsT);
     const ok = printTicket3Copias({ ticketInner: inner, comandaInner: comanda, title: `Ticket #${pedidoOk.numero}` });
-    if (!ok) toast.error("⚠️ Sin impresora detectada. Revisa los ajustes.");
-    else toast.success("✅ 3 copias enviadas");
+    if (!ok) toast.error("⚠️ No se pudo abrir el diálogo de impresión");
+    else toast.success("✅ 3 copias enviadas a la impresora");
   };
 
   const descargar = () => {
