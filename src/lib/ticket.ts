@@ -176,7 +176,9 @@ export type CierreData = {
 export function cierreHTML(c: CierreData) {
   const a = getAjustes();
   return `
+${logoTag()}
 <div class="t-title">${a.ticketHeader}</div>
+${negocioLines()}
 <div class="t-sub">CIERRE DE JORNADA<br/>${c.fecha} · ${new Date().toLocaleTimeString("es-ES")}</div>
 <div class="t-sep"></div>
 <div class="t-row"><span>Ventas efectivo</span><span>${eur(c.efectivo)}</span></div>
