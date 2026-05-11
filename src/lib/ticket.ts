@@ -19,11 +19,38 @@ body{font-family:'Consolas','Lucida Console','Courier New',monospace;font-size:1
 export function printHTML(innerHtml: string, title = "Ticket") {
   const html = `<!doctype html><html><head><meta charset="utf-8"><title>${title}</title><style>${TICKET_CSS}</style></head><body>${innerHtml}</body></html>`;
   const w = window.open("", "_blank", "width=420,height=720");
-  if (!w) return;
+  if (!w) return false;
   w.document.open();
   w.document.write(html);
   w.document.close();
   setTimeout(() => { w.focus(); w.print(); }, 150);
+  return true;
+}
+
+const COPIAS_CSS = `
+.copia { page-break-after: always; }
+.copia:last-child { page-break-after: auto; }
+.copia-h { text-align:center; font-weight:900; font-size:14px; margin:0 0 6px 0; padding:4px 0; border-top:2px solid #000; border-bottom:2px solid #000; letter-spacing:.06em; }
+.copia.cocina { font-size:16px; }
+.copia.cocina .t-mod { font-size:14px; }
+@media print { .copia { page-break-after: always; } .copia:last-child { page-break-after: auto; } }
+`;
+
+/** Imprime 3 copias automáticas en una sola llamada: Cliente, Negocio, Cocina. */
+export function printTicket3Copias(opts: { ticketInner: string; comandaInner: string; title?: string }) {
+  const body = `
+    <div class="copia"><div class="copia-h">COPIA CLIENTE</div>${opts.ticketInner}</div>
+    <div class="copia"><div class="copia-h">COPIA NEGOCIO</div>${opts.ticketInner}</div>
+    <div class="copia cocina"><div class="copia-h">📋 COMANDA COCINA</div>${opts.comandaInner}</div>
+  `;
+  const html = `<!doctype html><html><head><meta charset="utf-8"><title>${opts.title || "Ticket"}</title><style>${TICKET_CSS}${COPIAS_CSS}</style></head><body>${body}</body></html>`;
+  const w = window.open("", "_blank", "width=420,height=720");
+  if (!w) return false;
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+  setTimeout(() => { w.focus(); w.print(); }, 200);
+  return true;
 }
 
 type Mod = { quitar?: string[]; extras?: { nombre: string; precio: number }[]; notas?: string };
