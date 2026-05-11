@@ -267,6 +267,46 @@ function CierrePage() {
           </div>
         </div>
 
+        {/* TURNOS */}
+        <section className="no-print rounded-3xl bg-card p-4 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="text-xs font-bold uppercase text-muted-foreground">Turno</div>
+              {turnoActivo ? (
+                <div className="text-lg font-black">
+                  🟢 {turnoLabel(turnoActivo.turno)}
+                  <span className="ml-2 text-sm font-normal text-muted-foreground">
+                    Inicio: {new Date(turnoActivo.inicio).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                </div>
+              ) : (
+                <div className="text-lg font-black text-muted-foreground">⚪ Sin turno activo</div>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowIniciar(true)}
+                disabled={!!turnoActivo}
+                className="flex items-center gap-2 rounded-2xl bg-success px-4 py-3 text-sm font-black text-success-foreground shadow active:scale-95 disabled:opacity-40"
+              >
+                <Play className="h-4 w-4" /> Iniciar turno
+              </button>
+              <button
+                onClick={onCerrar}
+                disabled={!turnoActivo}
+                className="flex items-center gap-2 rounded-2xl bg-destructive px-4 py-3 text-sm font-black text-destructive-foreground shadow active:scale-95 disabled:opacity-40"
+              >
+                <Square className="h-4 w-4" /> Cerrar turno
+              </button>
+            </div>
+          </div>
+          {historial.length > 0 && (
+            <div className="mt-3 text-xs text-muted-foreground">
+              Último cierre: {turnoLabel(historial[0].turno)} · {new Date(historial[0].fin).toLocaleString("es-ES")} · {eur(historial[0].resumen.total)}
+            </div>
+          )}
+        </section>
+
         {/* TOTAL */}
         <div className="rounded-3xl bg-primary p-6 text-center text-primary-foreground shadow-lg">
           <div className="text-sm opacity-80">Total del día · {fecha}</div>
@@ -277,11 +317,12 @@ function CierrePage() {
         {/* Por método de pago */}
         <section className="rounded-3xl bg-card p-5 shadow-sm">
           <h2 className="mb-3 text-lg font-black">Por método de pago</h2>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
             <Card icon={<Banknote className="h-5 w-5" />} label="Efectivo" v={stats.efectivo} />
             <Card icon={<CreditCard className="h-5 w-5" />} label="Tarjeta" v={stats.tarjeta} />
             <Card icon={<Bike className="h-5 w-5" />} label="Glovo" v={stats.glovo} />
             <Card icon={<Bike className="h-5 w-5" />} label="Just Eat" v={stats.just_eat} />
+            <Card icon={<span>🛵</span>} label="Uber Eats" v={stats.uber_eats} />
           </div>
           {stats.sinMetodoN > 0 && (
             <div className="mt-3 rounded-xl bg-destructive/10 p-3 text-sm text-destructive">
@@ -291,18 +332,19 @@ function CierrePage() {
           <div className="mt-3 rounded-2xl bg-muted p-3 text-sm">
             <div className="flex justify-between"><span>💵 Caja física (efectivo)</span><span className="font-black">{eur(stats.efectivo)}</span></div>
             <div className="flex justify-between"><span>💳 Banco (tarjeta)</span><span className="font-black">{eur(stats.tarjeta)}</span></div>
-            <div className="flex justify-between"><span>🛵 Plataformas (Glovo + Just Eat)</span><span className="font-black">{eur(stats.glovo + stats.just_eat)}</span></div>
+            <div className="flex justify-between"><span>🛵 Plataformas (Glovo + Just Eat + Uber Eats)</span><span className="font-black">{eur(stats.glovo + stats.just_eat + stats.uber_eats)}</span></div>
           </div>
         </section>
 
         {/* Por tipo */}
         <section className="rounded-3xl bg-card p-5 shadow-sm">
           <h2 className="mb-3 text-lg font-black">Por tipo de pedido</h2>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
             <Card icon={<Home className="h-5 w-5" />} label={`Local (${stats.local.n})`} v={stats.local.total} />
             <Card icon={<Bike className="h-5 w-5" />} label={`Domicilio (${stats.domicilio.n})`} v={stats.domicilio.total} />
             <Card icon={<Bike className="h-5 w-5" />} label={`Glovo (${stats.tipoGlovo.n})`} v={stats.tipoGlovo.total} />
             <Card icon={<Bike className="h-5 w-5" />} label={`Just Eat (${stats.tipoJustEat.n})`} v={stats.tipoJustEat.total} />
+            <Card icon={<span>🛵</span>} label={`Uber Eats (${stats.tipoUberEats.n})`} v={stats.tipoUberEats.total} />
           </div>
         </section>
 
