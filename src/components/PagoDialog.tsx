@@ -187,7 +187,7 @@ body{font-family:'Consolas','Lucida Console','Courier New',monospace;font-size:1
   // ===== Ticket post-pago =====
   if (pedidoOk) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-2 sm:p-4">
+      <div translate="no" className="notranslate fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-2 sm:p-4">
         <div className="flex max-h-[95vh] w-full max-w-md flex-col overflow-hidden rounded-3xl bg-card shadow-2xl">
           <div className="no-print flex items-center justify-between border-b border-border p-4">
             <h2 className="text-xl font-black text-success">✓ Cobrado #{pedidoOk.numero}</h2>
