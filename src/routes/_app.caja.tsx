@@ -265,7 +265,7 @@ function CajaPage() {
               Vaciar
             </button>
             <button
-              onClick={() => setShowPago(true)}
+              onClick={abrirPago}
               disabled={estado.items.length === 0}
               className="rounded-2xl bg-primary py-4 text-lg font-black text-primary-foreground shadow-lg active:scale-95 disabled:opacity-40"
               style={{ minHeight: 56 }}
@@ -279,7 +279,7 @@ function CajaPage() {
       {/* FAB Cobrar visible en móvil en tab Menú */}
       {tabMovil === "menu" && estado.items.length > 0 && (
         <button
-          onClick={() => setShowPago(true)}
+          onClick={abrirPago}
           className="lg:hidden fixed left-3 right-3 z-30 rounded-2xl bg-primary px-4 py-4 text-base font-black text-primary-foreground shadow-2xl active:scale-95 flex items-center justify-between gap-3"
           style={{ bottom: `calc(72px + env(safe-area-inset-bottom))`, minHeight: 60 }}
         >
