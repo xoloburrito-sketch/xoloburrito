@@ -33,6 +33,7 @@ function CajaPage() {
   const [editando, setEditando] = useState<{ producto: Producto; item?: ItemCarrito } | null>(null);
   const [showCliente, setShowCliente] = useState(false);
   const [showPago, setShowPago] = useState(false);
+  const [tabMovil, setTabMovil] = useState<"menu" | "pedido">("menu");
 
   useEffect(() => {
     (async () => {
