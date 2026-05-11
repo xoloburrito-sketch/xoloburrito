@@ -342,7 +342,33 @@ function CierrePage() {
               Último cierre: {turnoLabel(historial[0].turno)} · {new Date(historial[0].fin).toLocaleString("es-ES")} · {eur(historial[0].resumen.total)}
             </div>
           )}
+
+          {/* Arqueo de caja */}
+          <div className="mt-4 rounded-2xl bg-muted p-4">
+            <div className="mb-2 flex items-center gap-2 text-sm font-black">🧮 Arqueo de caja</div>
+            <div className="grid grid-cols-3 gap-2 text-sm">
+              <div>
+                <div className="text-xs text-muted-foreground">Efectivo teórico</div>
+                <div className="text-lg font-black">{eur(efectivoTeorico)}</div>
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground">Efectivo real</div>
+                <input type="number" step="0.01" placeholder="0.00" value={efectivoReal} onChange={(e) => setEfectivoReal(e.target.value)} className="w-full rounded-lg border border-border bg-background p-2 text-lg font-black" />
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground">Diferencia</div>
+                <div className={`text-lg font-black ${diferencia === 0 ? "" : diferencia > 0 ? "text-success" : "text-destructive"}`}>
+                  {efectivoReal ? `${diferencia >= 0 ? "+" : ""}${eur(diferencia)}` : "—"}
+                </div>
+              </div>
+            </div>
+          </div>
         </section>
+
+        {/* Estadísticas globales */}
+        <Link to="/estadisticas" className="flex items-center justify-center gap-3 rounded-3xl bg-gradient-to-r from-success to-primary p-5 text-lg font-black text-primary-foreground shadow-lg active:scale-[0.99]">
+          <BarChart3 className="h-6 w-6" /> 📈 Estadísticas globales
+        </Link>
 
         {/* TOTAL */}
         <div className="rounded-3xl bg-primary p-6 text-center text-primary-foreground shadow-lg">
