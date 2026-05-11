@@ -113,6 +113,7 @@ export function PagoDialog({
       if (e2) throw e2;
 
       setPedidoOk({ numero: pedido.numero, fecha: pedido.created_at });
+      chimeCobro();
       toast.success(`Pedido #${pedido.numero} cobrado`);
     } catch (e) {
       toast.error((e as Error).message);
