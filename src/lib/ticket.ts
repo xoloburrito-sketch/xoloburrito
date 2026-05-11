@@ -20,13 +20,22 @@ body{font-family:'Consolas','Lucida Console','Courier New',monospace;font-size:1
 
 export function printHTML(innerHtml: string, title = "Ticket") {
   const html = `<!doctype html><html><head><meta charset="utf-8"><title>${title}</title><style>${TICKET_CSS}</style></head><body>${innerHtml}</body></html>`;
-  const w = window.open("", "_blank", "width=420,height=720");
-  if (!w) return false;
-  w.document.open();
-  w.document.write(html);
-  w.document.close();
-  setTimeout(() => { w.focus(); w.print(); }, 150);
-  return true;
+  try {
+    const iframe = document.createElement("iframe");
+    iframe.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0";
+    document.body.appendChild(iframe);
+    const doc = iframe.contentDocument || iframe.contentWindow?.document;
+    if (!doc) { document.body.removeChild(iframe); return false; }
+    doc.open(); doc.write(html); doc.close();
+    setTimeout(() => {
+      try { iframe.contentWindow?.focus(); iframe.contentWindow?.print(); } catch (e) { console.error(e); }
+      setTimeout(() => { try { document.body.removeChild(iframe); } catch { /* noop */ } }, 2000);
+    }, 300);
+    return true;
+  } catch (e) {
+    console.error("printHTML", e);
+    return false;
+  }
 }
 
 const COPIAS_CSS = `
@@ -46,13 +55,31 @@ export function printTicket3Copias(opts: { ticketInner: string; comandaInner: st
     <div class="copia cocina"><div class="copia-h">📋 COMANDA COCINA</div>${opts.comandaInner}</div>
   `;
   const html = `<!doctype html><html><head><meta charset="utf-8"><title>${opts.title || "Ticket"}</title><style>${TICKET_CSS}${COPIAS_CSS}</style></head><body>${body}</body></html>`;
-  const w = window.open("", "_blank", "width=420,height=720");
-  if (!w) return false;
-  w.document.open();
-  w.document.write(html);
-  w.document.close();
-  setTimeout(() => { w.focus(); w.print(); }, 200);
-  return true;
+  try {
+    // Usamos un iframe oculto: no lo bloquea el navegador como los pop-ups
+    const iframe = document.createElement("iframe");
+    iframe.style.position = "fixed";
+    iframe.style.right = "0";
+    iframe.style.bottom = "0";
+    iframe.style.width = "0";
+    iframe.style.height = "0";
+    iframe.style.border = "0";
+    document.body.appendChild(iframe);
+    const doc = iframe.contentDocument || iframe.contentWindow?.document;
+    if (!doc) { document.body.removeChild(iframe); return false; }
+    doc.open(); doc.write(html); doc.close();
+    setTimeout(() => {
+      try {
+        iframe.contentWindow?.focus();
+        iframe.contentWindow?.print();
+      } catch (e) { console.error("print error", e); }
+      setTimeout(() => { try { document.body.removeChild(iframe); } catch { /* noop */ } }, 2000);
+    }, 350);
+    return true;
+  } catch (e) {
+    console.error("printTicket3Copias", e);
+    return false;
+  }
 }
 
 type Mod = { quitar?: string[]; extras?: { nombre: string; precio: number }[]; notas?: string };

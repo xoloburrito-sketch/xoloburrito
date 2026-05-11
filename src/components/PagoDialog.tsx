@@ -83,40 +83,57 @@ export function PagoDialog({
     }
     setConfirmando(true);
     try {
+      const payload = {
+        cliente_id: estado.cliente_id,
+        tipo: estado.tipo,
+        estado: "pagado",
+        metodo_pago: metodo,
+        subtotal: Number(totalProductos) || 0,
+        envio: Number(envio) || 0,
+        total: Number(total) || 0,
+        recibido: metodo === "efectivo" ? recibidoNum : total,
+        cambio: metodo === "efectivo" ? cambio : 0,
+        notas: estado.notas || null,
+      };
       const { data: pedido, error } = await supabase
         .from("pedidos")
-        .insert({
-          cliente_id: estado.cliente_id,
-          tipo: estado.tipo,
-          estado: "pagado",
-          metodo_pago: metodo,
-          subtotal: totalProductos,
-          envio,
-          total,
-          recibido: metodo === "efectivo" ? recibidoNum : total,
-          cambio: metodo === "efectivo" ? cambio : 0,
-          notas: estado.notas || null,
-        })
+        .insert(payload)
         .select()
         .single();
-      if (error) throw error;
+      if (error) {
+        console.error("Error insertando pedido", error, payload);
+        toast.error(`No se pudo guardar el pedido: ${error.message}`);
+        setConfirmando(false);
+        return;
+      }
+      if (!pedido) {
+        toast.error("No se pudo guardar el pedido (sin respuesta)");
+        setConfirmando(false);
+        return;
+      }
 
-      const items = estado.items.map((i) => ({
-        pedido_id: pedido.id,
-        producto_id: i.producto_id,
-        nombre: i.nombre,
-        cantidad: i.cantidad,
-        precio_unitario: i.precio_unitario,
-        modificaciones: i.modificaciones as never,
-      }));
-      const { error: e2 } = await supabase.from("items_pedido").insert(items);
-      if (e2) throw e2;
+      if (estado.items.length > 0) {
+        const items = estado.items.map((i) => ({
+          pedido_id: pedido.id,
+          producto_id: i.producto_id,
+          nombre: i.nombre,
+          cantidad: i.cantidad,
+          precio_unitario: i.precio_unitario,
+          modificaciones: i.modificaciones as never,
+        }));
+        const { error: e2 } = await supabase.from("items_pedido").insert(items);
+        if (e2) {
+          console.error("Error insertando items", e2);
+          toast.error(`Pedido guardado pero falló añadir items: ${e2.message}`);
+        }
+      }
 
       setPedidoOk({ numero: pedido.numero, fecha: pedido.created_at });
-      chimeCobro();
+      try { chimeCobro(); } catch (e) { console.error("chimeCobro", e); }
       toast.success(`Pedido #${pedido.numero} cobrado`);
     } catch (e) {
-      toast.error((e as Error).message);
+      console.error("confirmar() exception", e);
+      toast.error((e as Error).message || "Error inesperado al cobrar");
     } finally {
       setConfirmando(false);
     }
@@ -139,8 +156,8 @@ export function PagoDialog({
     }));
     const comanda = comandaCocinaHTML({ numero: pedidoOk.numero, tipo: estado.tipo, created_at: pedidoOk.fecha }, itemsT);
     const ok = printTicket3Copias({ ticketInner: inner, comandaInner: comanda, title: `Ticket #${pedidoOk.numero}` });
-    if (!ok) toast.error("⚠️ Sin impresora detectada. Revisa los ajustes.");
-    else toast.success("✅ 3 copias enviadas");
+    if (!ok) toast.error("⚠️ No se pudo abrir el diálogo de impresión");
+    else toast.success("✅ 3 copias enviadas a la impresora");
   };
 
   const descargar = () => {
