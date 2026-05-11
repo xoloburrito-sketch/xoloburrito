@@ -44,7 +44,12 @@ type PedidoTicket = {
 };
 
 const tipoLabel = (t: string) =>
-  t === "local" ? "LOCAL" : t === "domicilio" ? "DOMICILIO" : t === "glovo" ? "GLOVO" : t === "just_eat" ? "JUST EAT" : t.toUpperCase();
+  t === "local" ? "LOCAL"
+  : t === "domicilio" ? "DOMICILIO"
+  : t === "glovo" ? "GLOVO"
+  : t === "just_eat" ? "JUST EAT"
+  : t === "uber_eats" ? "UBER EATS"
+  : t.toUpperCase();
 
 const lineaTotal = (i: ItemTicket) => {
   const ex = (i.modificaciones?.extras || []).reduce((s, e) => s + Number(e.precio), 0);
