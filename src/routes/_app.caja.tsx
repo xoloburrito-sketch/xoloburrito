@@ -318,12 +318,15 @@ function CajaPage() {
       {showCliente && <ClienteDialog onClose={() => setShowCliente(false)} />}
 
       {showPago && (
-        <PagoDialog
-          estado={estado}
-          total={totalProductos}
-          onClose={() => setShowPago(false)}
-          onPagado={() => { carrito.clear(); setShowPago(false); }}
-        />
+        <CobrarErrorBoundary key={cobroKey} onReset={() => { setShowPago(false); setCobroKey((k) => k + 1); }}>
+          <PagoDialog
+            key={cobroKey}
+            estado={estado}
+            total={totalProductos}
+            onClose={() => setShowPago(false)}
+            onPagado={() => { carrito.clear(); setShowPago(false); }}
+          />
+        </CobrarErrorBoundary>
       )}
     </div>
   );
