@@ -33,7 +33,7 @@ const Lbl = ({ children }: { children: React.ReactNode }) => (
 function AjustesPage() {
   const a = useAjustes();
   const [pinActual, setPinActual] = useState(""); const [pinNuevo, setPinNuevo] = useState(""); const [pinConf, setPinConf] = useState("");
-  const [efectivoReal, setEfectivoReal] = useState(""); // unused
+  
 
   const guardar = (patch: Partial<typeof a>) => { setAjustes(patch); toast.success("✅ Guardado"); };
 
