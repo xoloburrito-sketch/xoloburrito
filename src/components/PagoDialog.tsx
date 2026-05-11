@@ -5,6 +5,7 @@ import { X, Printer, Calculator, Banknote, CreditCard, Bike } from "lucide-react
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ticketHTML, comandaCocinaHTML, printHTML, printTicket3Copias, TICKET_CSS } from "@/lib/ticket";
+import { chimeCobro } from "@/lib/sonidos";
 
 type Item = {
   uid: string;
