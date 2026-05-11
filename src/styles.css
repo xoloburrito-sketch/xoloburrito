@@ -134,6 +134,25 @@
   --input: oklch(0.3 0.02 25);
 }
 
+/* === MÓVIL / PDA === */
+@media (max-width: 767px) {
+  /* Inputs >= 16px para evitar zoom iOS */
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+  /* Scroll suave táctil */
+  .scroll-touch {
+    -webkit-overflow-scrolling: touch;
+  }
+  /* Padding inferior global para que nada quede tras la barra */
+  .pb-safe-bottom {
+    padding-bottom: calc(72px + env(safe-area-inset-bottom));
+  }
+}
+.bottom-nav-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
 @page {
   size: 80mm auto;
   margin: 0;
