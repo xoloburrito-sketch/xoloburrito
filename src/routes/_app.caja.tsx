@@ -221,7 +221,7 @@ function CajaPage() {
           ))}
         </div>
 
-        <div className="space-y-2 border-t border-border p-3">
+        <div className="sticky bottom-0 z-10 space-y-2 border-t border-border bg-card p-3 shadow-[0_-4px_12px_rgba(0,0,0,0.06)]">
           {(estado.tipo === "domicilio" || envio > 0) && (
             <div className="space-y-1 rounded-xl bg-muted p-2">
               <div className="flex justify-between text-xs">
@@ -252,24 +252,41 @@ function CajaPage() {
             <span className="text-sm font-bold uppercase text-muted-foreground">Total</span>
             <span className="text-3xl font-black text-primary">{eur(total)}</span>
           </div>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-[1fr_2fr] gap-2">
             <button
               onClick={() => carrito.clear()}
               disabled={estado.items.length === 0}
-              className="rounded-2xl bg-muted py-3 text-sm font-bold active:scale-95 disabled:opacity-40"
+              className="rounded-2xl bg-muted py-4 text-sm font-bold active:scale-95 disabled:opacity-40"
+              style={{ minHeight: 56 }}
             >
               Vaciar
             </button>
             <button
               onClick={() => setShowPago(true)}
               disabled={estado.items.length === 0}
-              className="rounded-2xl bg-primary py-3 text-sm font-black text-primary-foreground shadow active:scale-95 disabled:opacity-40"
+              className="rounded-2xl bg-primary py-4 text-lg font-black text-primary-foreground shadow-lg active:scale-95 disabled:opacity-40"
+              style={{ minHeight: 56 }}
             >
-              Cobrar
+              ✓ Cobrar {eur(total)}
             </button>
           </div>
         </div>
       </aside>
+
+      {/* FAB Cobrar visible en móvil en tab Menú */}
+      {tabMovil === "menu" && estado.items.length > 0 && (
+        <button
+          onClick={() => setShowPago(true)}
+          className="lg:hidden fixed left-3 right-3 z-30 rounded-2xl bg-primary px-4 py-4 text-base font-black text-primary-foreground shadow-2xl active:scale-95 flex items-center justify-between gap-3"
+          style={{ bottom: `calc(72px + env(safe-area-inset-bottom))`, minHeight: 60 }}
+        >
+          <span className="flex items-center gap-2">
+            <span className="rounded-full bg-primary-foreground/20 px-2 py-0.5 text-sm">{itemsCount}</span>
+            Ver pedido
+          </span>
+          <span className="text-xl">{eur(total)} →</span>
+        </button>
+      )}
 
       {editando && (
         <ModificadorDialog
