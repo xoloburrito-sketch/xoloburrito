@@ -499,8 +499,53 @@ function CierrePage() {
           )}
         </section>
       </div>
+
+      {/* Modal: Iniciar turno */}
+      {showIniciar && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={() => setShowIniciar(false)}>
+          <div className="w-full max-w-sm rounded-3xl bg-card p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="mb-4 text-xl font-black">▶ Iniciar turno</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <button onClick={() => onIniciar("tarde")} className="rounded-2xl bg-primary p-6 text-lg font-black text-primary-foreground active:scale-95">🌅 TARDE</button>
+              <button onClick={() => onIniciar("noche")} className="rounded-2xl bg-secondary p-6 text-lg font-black text-secondary-foreground active:scale-95">🌙 NOCHE</button>
+            </div>
+            <button onClick={() => setShowIniciar(false)} className="mt-4 w-full rounded-2xl bg-muted py-3 font-bold active:scale-95">Cancelar</button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Resumen de cierre de turno */}
+      {resumenCierre && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={() => setResumenCierre(null)}>
+          <div className="w-full max-w-md rounded-3xl bg-card p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="mb-1 text-xl font-black">⏹ Cierre de turno {turnoLabel(resumenCierre.turno)}</h3>
+            <div className="mb-4 text-xs text-muted-foreground">
+              {new Date(resumenCierre.inicio).toLocaleTimeString("es-ES")} → {new Date(resumenCierre.fin).toLocaleTimeString("es-ES")}
+              {" · "}{duracionMinutos(resumenCierre.inicio, resumenCierre.fin)} min
+            </div>
+            <div className="space-y-1 rounded-2xl bg-muted p-4 text-sm">
+              <Row label="Pedidos" v={`${resumenCierre.resumen.pedidos}`} />
+              <Row label="Efectivo" v={eur(resumenCierre.resumen.efectivo)} />
+              <Row label="Tarjeta" v={eur(resumenCierre.resumen.tarjeta)} />
+              <Row label="Glovo" v={eur(resumenCierre.resumen.glovo)} />
+              <Row label="Just Eat" v={eur(resumenCierre.resumen.just_eat)} />
+              <Row label="🛵 Uber Eats" v={eur(resumenCierre.resumen.uber_eats)} />
+              <Row label="Envíos" v={eur(resumenCierre.resumen.envios)} />
+              <div className="mt-2 flex items-baseline justify-between border-t border-border pt-2">
+                <span className="font-black">TOTAL</span>
+                <span className="text-2xl font-black text-primary">{eur(resumenCierre.resumen.total)}</span>
+              </div>
+            </div>
+            <button onClick={() => setResumenCierre(null)} className="mt-4 w-full rounded-2xl bg-primary py-3 font-black text-primary-foreground active:scale-95">Cerrar</button>
+          </div>
+        </div>
+      )}
     </div>
   );
+}
+
+function Row({ label, v }: { label: string; v: string }) {
+  return <div className="flex justify-between"><span className="text-muted-foreground">{label}</span><span className="font-bold">{v}</span></div>;
 }
 
 function Card({ icon, label, v }: { icon: React.ReactNode; label: string; v: number }) {
