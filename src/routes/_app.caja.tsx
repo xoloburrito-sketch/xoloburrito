@@ -7,6 +7,7 @@ import { ModificadorDialog } from "@/components/ModificadorDialog";
 import { ClienteDialog } from "@/components/ClienteDialog";
 import { PagoDialog } from "@/components/PagoDialog";
 import { Trash2, User, Home, Bike, Plus, Minus, Pencil, Bike as BikeIcon } from "lucide-react";
+import { beepAdd } from "@/lib/sonidos";
 
 export const Route = createFileRoute("/_app/caja")({
   component: CajaPage,
@@ -265,6 +266,7 @@ function CajaPage() {
                 cantidad,
                 modificaciones: mods,
               });
+              beepAdd();
             }
             setEditando(null);
           }}

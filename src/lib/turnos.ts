@@ -11,6 +11,8 @@ export type TurnoActivo = {
   inicio: string; // ISO
 };
 
+export type TopProducto = { nombre: string; unidades: number; total: number };
+
 export type ResumenTurno = {
   pedidos: number;
   total: number;
@@ -20,6 +22,13 @@ export type ResumenTurno = {
   just_eat: number;
   uber_eats: number;
   envios: number;
+  anulados?: number;
+  local?: number;
+  domicilio?: number;
+  ticket_medio?: number;
+  top_productos?: TopProducto[];
+  efectivo_real?: number; // arqueo
+  diferencia?: number;
 };
 
 export type CierreTurno = TurnoActivo & {
@@ -65,6 +74,11 @@ export function getHistorialTurnos(): CierreTurno[] {
   }
 }
 
+export function borrarHistorialTurnos() {
+  localStorage.removeItem(KEY_HIST);
+  window.dispatchEvent(new Event("pos:turno"));
+}
+
 export function useTurnoActivo() {
   const [t, setT] = useState<TurnoActivo | null>(getTurnoActivo());
   useEffect(() => {
@@ -83,4 +97,8 @@ export function duracionMinutos(inicio: string, fin: string) {
   return Math.round((new Date(fin).getTime() - new Date(inicio).getTime()) / 60000);
 }
 
-export const turnoLabel = (t: TurnoNombre) => (t === "tarde" ? "TARDE" : "NOCHE");
+import { getAjustes } from "./ajustes";
+export const turnoLabel = (t: TurnoNombre) => {
+  const a = getAjustes();
+  return (t === "tarde" ? a.turno1Nombre : a.turno2Nombre).toUpperCase();
+};

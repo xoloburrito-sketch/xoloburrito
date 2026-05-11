@@ -13,6 +13,7 @@ import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppPedidosRouteImport } from './routes/_app.pedidos'
 import { Route as AppMenuRouteImport } from './routes/_app.menu'
+import { Route as AppEstadisticasRouteImport } from './routes/_app.estadisticas'
 import { Route as AppClientesRouteImport } from './routes/_app.clientes'
 import { Route as AppCierreRouteImport } from './routes/_app.cierre'
 import { Route as AppCajaRouteImport } from './routes/_app.caja'
@@ -35,6 +36,11 @@ const AppPedidosRoute = AppPedidosRouteImport.update({
 const AppMenuRoute = AppMenuRouteImport.update({
   id: '/menu',
   path: '/menu',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppEstadisticasRoute = AppEstadisticasRouteImport.update({
+  id: '/estadisticas',
+  path: '/estadisticas',
   getParentRoute: () => AppRoute,
 } as any)
 const AppClientesRoute = AppClientesRouteImport.update({
@@ -64,6 +70,7 @@ export interface FileRoutesByFullPath {
   '/caja': typeof AppCajaRoute
   '/cierre': typeof AppCierreRoute
   '/clientes': typeof AppClientesRoute
+  '/estadisticas': typeof AppEstadisticasRoute
   '/menu': typeof AppMenuRoute
   '/pedidos': typeof AppPedidosRoute
 }
@@ -73,6 +80,7 @@ export interface FileRoutesByTo {
   '/caja': typeof AppCajaRoute
   '/cierre': typeof AppCierreRoute
   '/clientes': typeof AppClientesRoute
+  '/estadisticas': typeof AppEstadisticasRoute
   '/menu': typeof AppMenuRoute
   '/pedidos': typeof AppPedidosRoute
 }
@@ -84,6 +92,7 @@ export interface FileRoutesById {
   '/_app/caja': typeof AppCajaRoute
   '/_app/cierre': typeof AppCierreRoute
   '/_app/clientes': typeof AppClientesRoute
+  '/_app/estadisticas': typeof AppEstadisticasRoute
   '/_app/menu': typeof AppMenuRoute
   '/_app/pedidos': typeof AppPedidosRoute
 }
@@ -95,6 +104,7 @@ export interface FileRouteTypes {
     | '/caja'
     | '/cierre'
     | '/clientes'
+    | '/estadisticas'
     | '/menu'
     | '/pedidos'
   fileRoutesByTo: FileRoutesByTo
@@ -104,6 +114,7 @@ export interface FileRouteTypes {
     | '/caja'
     | '/cierre'
     | '/clientes'
+    | '/estadisticas'
     | '/menu'
     | '/pedidos'
   id:
@@ -114,6 +125,7 @@ export interface FileRouteTypes {
     | '/_app/caja'
     | '/_app/cierre'
     | '/_app/clientes'
+    | '/_app/estadisticas'
     | '/_app/menu'
     | '/_app/pedidos'
   fileRoutesById: FileRoutesById
@@ -153,6 +165,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppMenuRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/estadisticas': {
+      id: '/_app/estadisticas'
+      path: '/estadisticas'
+      fullPath: '/estadisticas'
+      preLoaderRoute: typeof AppEstadisticasRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/clientes': {
       id: '/_app/clientes'
       path: '/clientes'
@@ -189,6 +208,7 @@ interface AppRouteChildren {
   AppCajaRoute: typeof AppCajaRoute
   AppCierreRoute: typeof AppCierreRoute
   AppClientesRoute: typeof AppClientesRoute
+  AppEstadisticasRoute: typeof AppEstadisticasRoute
   AppMenuRoute: typeof AppMenuRoute
   AppPedidosRoute: typeof AppPedidosRoute
 }
@@ -198,6 +218,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppCajaRoute: AppCajaRoute,
   AppCierreRoute: AppCierreRoute,
   AppClientesRoute: AppClientesRoute,
+  AppEstadisticasRoute: AppEstadisticasRoute,
   AppMenuRoute: AppMenuRoute,
   AppPedidosRoute: AppPedidosRoute,
 }

@@ -1,11 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { eur } from "@/lib/format";
 import { toast } from "sonner";
 import {
   Banknote, CreditCard, Bike, Home, Calculator, Printer, RefreshCw,
-  Trash2, Pencil, Check, X, Plus, Minus, Play, Square,
+  Trash2, Pencil, Check, X, Plus, Minus, Play, Square, BarChart3,
 } from "lucide-react";
 import {
   iniciarTurno, cerrarTurnoActivo, useTurnoActivo, turnoLabel,
@@ -208,22 +208,49 @@ function CierrePage() {
   const turnoActivo = useTurnoActivo();
   const [showIniciar, setShowIniciar] = useState(false);
   const [resumenCierre, setResumenCierre] = useState<{ resumen: ResumenTurno; inicio: string; fin: string; turno: TurnoNombre } | null>(null);
+  const [efectivoReal, setEfectivoReal] = useState<string>("");
   const historial = getHistorialTurnos();
 
-  const calcularResumenTurno = (): ResumenTurno => {
+  const calcularResumenTurno = async (): Promise<ResumenTurno> => {
     const inicio = turnoActivo ? new Date(turnoActivo.inicio).getTime() : 0;
     const desde = pedidos.filter((p) => new Date(p.created_at).getTime() >= inicio);
     const sum = (arr: typeof pedidos) => arr.reduce((s, p) => s + Number(p.total), 0);
     const sumBy = (k: string) => sum(desde.filter((p) => p.metodo_pago === k));
+    const sumTipo = (k: string) => sum(desde.filter((p) => p.tipo === k));
+
+    // Top productos del turno (consulta items)
+    let top_productos: { nombre: string; unidades: number; total: number }[] = [];
+    if (desde.length) {
+      const ids = desde.map((p) => p.id);
+      const { data } = await supabase.from("items_pedido").select("nombre,cantidad,precio_unitario,modificaciones").in("pedido_id", ids);
+      const map = new Map<string, { unidades: number; total: number }>();
+      for (const it of (data as Item[] | null) || []) {
+        const cur = map.get(it.nombre) || { unidades: 0, total: 0 };
+        cur.unidades += it.cantidad;
+        cur.total += lineaTotal(it);
+        map.set(it.nombre, cur);
+      }
+      top_productos = [...map.entries()].map(([nombre, v]) => ({ nombre, ...v })).sort((a, b) => b.unidades - a.unidades).slice(0, 10);
+    }
+
+    const efectivo = sumBy("efectivo");
+    const efectivo_real = parseFloat(efectivoReal.replace(",", ".")) || 0;
     return {
       pedidos: desde.length,
       total: sum(desde),
-      efectivo: sumBy("efectivo"),
+      efectivo,
       tarjeta: sumBy("tarjeta"),
       glovo: sumBy("glovo"),
       just_eat: sumBy("just_eat"),
       uber_eats: sumBy("uber_eats"),
       envios: desde.reduce((s, p) => s + Number(p.envio || 0), 0),
+      local: sumTipo("local"),
+      domicilio: sumTipo("domicilio"),
+      anulados: 0,
+      ticket_medio: desde.length ? sum(desde) / desde.length : 0,
+      top_productos,
+      efectivo_real: efectivoReal ? efectivo_real : undefined,
+      diferencia: efectivoReal ? (efectivo_real - efectivo) : undefined,
     };
   };
 
@@ -233,16 +260,26 @@ function CierrePage() {
     toast.success(`▶ Turno ${turnoLabel(t)} iniciado`);
   };
 
-  const onCerrar = () => {
+  const onCerrar = async () => {
     if (!turnoActivo) return;
     if (!confirm(`¿Cerrar turno ${turnoLabel(turnoActivo.turno)}?`)) return;
-    const resumen = calcularResumenTurno();
+    const resumen = await calcularResumenTurno();
     const c = cerrarTurnoActivo(resumen);
     if (c) {
       setResumenCierre({ resumen, inicio: c.inicio, fin: c.fin, turno: c.turno });
+      setEfectivoReal("");
       toast.success("⏹ Turno cerrado y archivado");
     }
   };
+
+  const efectivoTeorico = useMemo(() => {
+    if (!turnoActivo) return stats.efectivo;
+    const inicio = new Date(turnoActivo.inicio).getTime();
+    return pedidos.filter((p) => new Date(p.created_at).getTime() >= inicio && p.metodo_pago === "efectivo")
+      .reduce((s, p) => s + Number(p.total), 0);
+  }, [pedidos, turnoActivo, stats.efectivo]);
+  const efectivoRealNum = parseFloat(efectivoReal.replace(",", ".")) || 0;
+  const diferencia = efectivoRealNum - efectivoTeorico;
 
   return (
     <div className="h-full overflow-y-auto p-4">
@@ -305,7 +342,33 @@ function CierrePage() {
               Último cierre: {turnoLabel(historial[0].turno)} · {new Date(historial[0].fin).toLocaleString("es-ES")} · {eur(historial[0].resumen.total)}
             </div>
           )}
+
+          {/* Arqueo de caja */}
+          <div className="mt-4 rounded-2xl bg-muted p-4">
+            <div className="mb-2 flex items-center gap-2 text-sm font-black">🧮 Arqueo de caja</div>
+            <div className="grid grid-cols-3 gap-2 text-sm">
+              <div>
+                <div className="text-xs text-muted-foreground">Efectivo teórico</div>
+                <div className="text-lg font-black">{eur(efectivoTeorico)}</div>
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground">Efectivo real</div>
+                <input type="number" step="0.01" placeholder="0.00" value={efectivoReal} onChange={(e) => setEfectivoReal(e.target.value)} className="w-full rounded-lg border border-border bg-background p-2 text-lg font-black" />
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground">Diferencia</div>
+                <div className={`text-lg font-black ${diferencia === 0 ? "" : diferencia > 0 ? "text-success" : "text-destructive"}`}>
+                  {efectivoReal ? `${diferencia >= 0 ? "+" : ""}${eur(diferencia)}` : "—"}
+                </div>
+              </div>
+            </div>
+          </div>
         </section>
+
+        {/* Estadísticas globales */}
+        <Link to="/estadisticas" className="flex items-center justify-center gap-3 rounded-3xl bg-gradient-to-r from-success to-primary p-5 text-lg font-black text-primary-foreground shadow-lg active:scale-[0.99]">
+          <BarChart3 className="h-6 w-6" /> 📈 Estadísticas globales
+        </Link>
 
         {/* TOTAL */}
         <div className="rounded-3xl bg-primary p-6 text-center text-primary-foreground shadow-lg">
