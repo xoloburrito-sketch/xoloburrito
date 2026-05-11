@@ -6,6 +6,7 @@ import { eur } from "@/lib/format";
 import { ModificadorDialog } from "@/components/ModificadorDialog";
 import { ClienteDialog } from "@/components/ClienteDialog";
 import { PagoDialog } from "@/components/PagoDialog";
+import { CobrarErrorBoundary } from "@/components/CobrarErrorBoundary";
 import { Trash2, User, Home, Bike, Plus, Minus, Pencil, Bike as BikeIcon } from "lucide-react";
 import { beepAdd } from "@/lib/sonidos";
 
