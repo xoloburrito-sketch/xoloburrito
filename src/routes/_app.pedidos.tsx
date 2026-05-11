@@ -428,12 +428,13 @@ function PedidosPage() {
                 </button>
               </div>
 
-              <div className="mt-3 grid grid-cols-2 gap-2">
+              <div className="mt-3 grid grid-cols-3 gap-2">
                 {([
                   { k: "local", label: "Local", Icon: Home },
                   { k: "domicilio", label: "Domicilio", Icon: Bike },
                   { k: "glovo", label: "Glovo", Icon: Bike },
                   { k: "just_eat", label: "Just Eat", Icon: Bike },
+                  { k: "uber_eats", label: "🛵 Uber", Icon: Bike },
                 ] as const).map(({ k, label, Icon }) => (
                   <button
                     key={k}
@@ -515,12 +516,13 @@ function PedidosPage() {
             </div>
 
             <div className="space-y-2 border-t border-border p-4 text-sm">
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 {([
                   { k: "efectivo", label: "Efectivo", Icon: Banknote },
                   { k: "tarjeta", label: "Tarjeta", Icon: CreditCard },
                   { k: "glovo", label: "Glovo", Icon: Bike },
                   { k: "just_eat", label: "Just Eat", Icon: Bike },
+                  { k: "uber_eats", label: "🛵 Uber", Icon: Bike },
                 ] as const).map(({ k, label, Icon }) => (
                   <button
                     key={k}
