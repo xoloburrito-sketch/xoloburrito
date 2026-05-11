@@ -322,7 +322,7 @@ body{font-family:'Consolas','Lucida Console','Courier New',monospace;font-size:1
           ) : (
             <div className="rounded-2xl bg-accent p-6 text-center">
               <Bike className="mx-auto h-12 w-12 text-primary" />
-              <p className="mt-3 font-bold">Pedido pagado por {metodo === "glovo" ? "Glovo" : "Just Eat"}</p>
+              <p className="mt-3 font-bold">Pedido pagado por {metodo === "glovo" ? "Glovo" : metodo === "just_eat" ? "Just Eat" : "Uber Eats"}</p>
               <p className="text-sm text-muted-foreground">Se registra como ingreso por plataforma</p>
             </div>
           )}
