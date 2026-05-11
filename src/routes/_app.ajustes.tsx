@@ -11,7 +11,7 @@ import {
 } from "@/lib/impresoras";
 import {
   usePlantilla, savePlantilla, resetPlantilla,
-  separadorChars, tamCocinaPx, type Plantilla,
+  type Plantilla,
 } from "@/lib/plantilla";
 import { printTicket3Copias, ticketHTML, comandaCocinaHTML } from "@/lib/ticket";
 
