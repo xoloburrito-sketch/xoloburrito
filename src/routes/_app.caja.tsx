@@ -128,7 +128,7 @@ function CajaPage() {
       </section>
 
       {/* Derecha: carrito */}
-      <aside className="flex h-full flex-col overflow-hidden rounded-3xl bg-card shadow-sm">
+      <aside className={`h-full flex-col overflow-hidden rounded-3xl bg-card shadow-sm ${tabMovil === "pedido" ? "flex" : "hidden"} lg:flex flex-1 min-h-0`}>
         <div className="space-y-2 border-b border-border p-3">
           <div className="grid grid-cols-3 gap-2">
             {TIPOS.map(({ k, label, Icon }) => (
