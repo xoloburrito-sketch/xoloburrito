@@ -120,7 +120,26 @@ export function PagoDialog({
     }
   };
 
-  const imprimir = () => window.print();
+  const imprimir = () => {
+    if (!pedidoOk) return;
+    const inner = ticketRef.current?.innerHTML || "";
+    const cli = estado.cliente_nombre ? {
+      nombre: estado.cliente_nombre,
+      telefono: estado.cliente_telefono || "",
+      direccion: estado.cliente_direccion,
+      piso: estado.cliente_piso,
+      codigo_puerta: estado.cliente_codigo,
+      nota_reparto: estado.cliente_nota,
+    } : null;
+    const itemsT = estado.items.map((i) => ({
+      nombre: i.nombre, cantidad: i.cantidad, precio_unitario: i.precio_unitario,
+      modificaciones: i.modificaciones,
+    }));
+    const comanda = comandaCocinaHTML({ numero: pedidoOk.numero, tipo: estado.tipo, created_at: pedidoOk.fecha }, itemsT);
+    const ok = printTicket3Copias({ ticketInner: inner, comandaInner: comanda, title: `Ticket #${pedidoOk.numero}` });
+    if (!ok) toast.error("⚠️ Sin impresora detectada. Revisa los ajustes.");
+    else toast.success("✅ 3 copias enviadas");
+  };
 
   const descargar = () => {
     if (!ticketRef.current) return;
@@ -248,12 +267,13 @@ body{font-family:'Consolas','Lucida Console','Courier New',monospace;font-size:1
 
           <div>
             <div className="mb-2 text-xs font-bold uppercase text-muted-foreground">Método de pago</div>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
               {([
                 { k: "efectivo", label: "Efectivo", Icon: Banknote },
                 { k: "tarjeta", label: "Tarjeta", Icon: CreditCard },
                 { k: "glovo", label: "Glovo", Icon: Bike },
                 { k: "just_eat", label: "Just Eat", Icon: Bike },
+                { k: "uber_eats", label: "🛵 Uber Eats", Icon: Bike },
               ] as const).map(({ k, label, Icon }) => (
                 <button
                   key={k}
