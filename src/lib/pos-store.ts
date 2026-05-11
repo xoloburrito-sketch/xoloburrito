@@ -30,7 +30,7 @@ type Estado = {
   envio_override: number | null; // null = usar precio por defecto; 0 = sin envío; N = manual
 };
 
-export type TipoPedido = "local" | "domicilio" | "glovo" | "just_eat";
+export type TipoPedido = "local" | "domicilio" | "glovo" | "just_eat" | "uber_eats";
 import { getAjustes } from "./ajustes";
 export const PRECIO_ENVIO_DOMICILIO = 2.5; // fallback
 export const getPrecioEnvio = () => {

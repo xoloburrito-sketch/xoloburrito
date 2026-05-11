@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { ModificadorDialog } from "@/components/ModificadorDialog";
 import { SplitPaymentDialog } from "@/components/SplitPaymentDialog";
 import type { Modificacion, ItemCarrito } from "@/lib/pos-store";
-import { ticketHTML, comandaCocinaHTML, printHTML } from "@/lib/ticket";
+import { ticketHTML, comandaCocinaHTML, printHTML, printTicket3Copias } from "@/lib/ticket";
 import { getPrecioEnvio } from "@/lib/pos-store";
 
 export const Route = createFileRoute("/_app/pedidos")({
@@ -73,7 +73,7 @@ function PedidosPage() {
   const [editando, setEditando] = useState<{ producto: Producto; item?: Item } | null>(null);
   const [showAdd, setShowAdd] = useState(false);
   const [showSplit, setShowSplit] = useState(false);
-  const [filtro, setFiltro] = useState<"hoy" | "todos" | "anulados" | "modificados" | "glovo" | "just_eat">("hoy");
+  const [filtro, setFiltro] = useState<"hoy" | "todos" | "anulados" | "modificados" | "glovo" | "just_eat" | "uber_eats">("hoy");
   const [busqClient, setBusqClient] = useState("");
 
   const SELECT_PEDIDO = "*, clientes(nombre, telefono, direccion, piso, codigo_puerta, nota_reparto)";
@@ -183,7 +183,7 @@ function PedidosPage() {
     cargarPedidos();
   };
 
-  const cambiarTipo = async (tipo: "local" | "domicilio" | "glovo" | "just_eat") => {
+  const cambiarTipo = async (tipo: "local" | "domicilio" | "glovo" | "just_eat" | "uber_eats") => {
     if (!sel) return;
     const envio = tipo === "domicilio" ? getPrecioEnvio() : 0;
     const subtotal = items.reduce((s, i) => s + lineaTotal(i), 0);
@@ -193,7 +193,7 @@ function PedidosPage() {
     if (data) setSel(data as unknown as Pedido);
   };
 
-  const cambiarMetodo = async (metodo: "efectivo" | "tarjeta" | "glovo" | "just_eat") => {
+  const cambiarMetodo = async (metodo: "efectivo" | "tarjeta" | "glovo" | "just_eat" | "uber_eats") => {
     if (!sel) return;
     await supabase.from("pedidos").update({ metodo_pago: metodo }).eq("id", sel.id);
     setSel({ ...sel, metodo_pago: metodo });
@@ -223,6 +223,7 @@ function PedidosPage() {
     else if (filtro === "modificados") arr = arr.filter((p) => p.estado === "modificado");
     else if (filtro === "glovo") arr = arr.filter((p) => p.tipo === "glovo");
     else if (filtro === "just_eat") arr = arr.filter((p) => p.tipo === "just_eat");
+    else if (filtro === "uber_eats") arr = arr.filter((p) => p.tipo === "uber_eats");
     if (busqClient.trim()) {
       const q = busqClient.toLowerCase();
       arr = arr.filter((p) =>
@@ -241,13 +242,17 @@ function PedidosPage() {
       direccion: sel.clientes.direccion, piso: sel.clientes.piso,
       codigo_puerta: sel.clientes.codigo_puerta, nota_reparto: sel.clientes.nota_reparto,
     } : null;
-    printHTML(ticketHTML({
+    const ticketInner = ticketHTML({
       numero: sel.numero, created_at: sel.created_at, tipo: sel.tipo,
       metodo_pago: sel.metodo_pago, subtotal: Number(sel.subtotal),
       envio: Number(sel.envio || 0), descuento: Number(sel.descuento || 0),
       total: Number(sel.total), recibido: sel.recibido, cambio: sel.cambio,
       cliente: cli, notas: sel.notas,
-    }, items), `Ticket #${sel.numero}`);
+    }, items);
+    const comandaInner = comandaCocinaHTML({ numero: sel.numero, tipo: sel.tipo, created_at: sel.created_at }, items);
+    const ok = printTicket3Copias({ ticketInner, comandaInner, title: `Ticket #${sel.numero}` });
+    if (!ok) toast.error("⚠️ Sin impresora detectada. Revisa los ajustes.");
+    else toast.success("✅ 3 copias enviadas");
   };
 
   const imprimirComanda = () => {
@@ -332,6 +337,7 @@ function PedidosPage() {
             { k: "anulados", label: "Anulados" },
             { k: "glovo", label: "Glovo" },
             { k: "just_eat", label: "Just Eat" },
+            { k: "uber_eats", label: "🛵 Uber Eats" },
           ] as const).map(({ k, label }) => (
             <button key={k} onClick={() => setFiltro(k)}
               className={`rounded-xl px-3 py-1.5 text-xs font-bold active:scale-95 ${filtro === k ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
@@ -422,12 +428,13 @@ function PedidosPage() {
                 </button>
               </div>
 
-              <div className="mt-3 grid grid-cols-2 gap-2">
+              <div className="mt-3 grid grid-cols-3 gap-2">
                 {([
                   { k: "local", label: "Local", Icon: Home },
                   { k: "domicilio", label: "Domicilio", Icon: Bike },
                   { k: "glovo", label: "Glovo", Icon: Bike },
                   { k: "just_eat", label: "Just Eat", Icon: Bike },
+                  { k: "uber_eats", label: "🛵 Uber", Icon: Bike },
                 ] as const).map(({ k, label, Icon }) => (
                   <button
                     key={k}
@@ -509,12 +516,13 @@ function PedidosPage() {
             </div>
 
             <div className="space-y-2 border-t border-border p-4 text-sm">
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 {([
                   { k: "efectivo", label: "Efectivo", Icon: Banknote },
                   { k: "tarjeta", label: "Tarjeta", Icon: CreditCard },
                   { k: "glovo", label: "Glovo", Icon: Bike },
                   { k: "just_eat", label: "Just Eat", Icon: Bike },
+                  { k: "uber_eats", label: "🛵 Uber", Icon: Bike },
                 ] as const).map(({ k, label, Icon }) => (
                   <button
                     key={k}

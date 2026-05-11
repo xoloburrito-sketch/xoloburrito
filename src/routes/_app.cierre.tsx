@@ -5,8 +5,12 @@ import { eur } from "@/lib/format";
 import { toast } from "sonner";
 import {
   Banknote, CreditCard, Bike, Home, Calculator, Printer, RefreshCw,
-  Trash2, Pencil, Check, X, Plus, Minus,
+  Trash2, Pencil, Check, X, Plus, Minus, Play, Square,
 } from "lucide-react";
+import {
+  iniciarTurno, cerrarTurnoActivo, useTurnoActivo, turnoLabel,
+  duracionMinutos, getHistorialTurnos, type TurnoNombre, type ResumenTurno,
+} from "@/lib/turnos";
 
 export const Route = createFileRoute("/_app/cierre")({
   component: CierrePage,
@@ -152,11 +156,13 @@ function CierrePage() {
     const ta = pedidos.filter((p) => p.metodo_pago === "tarjeta");
     const gl = pedidos.filter((p) => p.metodo_pago === "glovo");
     const je = pedidos.filter((p) => p.metodo_pago === "just_eat");
+    const ue = pedidos.filter((p) => p.metodo_pago === "uber_eats");
     const sin = pedidos.filter((p) => !p.metodo_pago);
     const local = pedidos.filter((p) => p.tipo === "local");
     const dom = pedidos.filter((p) => p.tipo === "domicilio");
     const tGl = pedidos.filter((p) => p.tipo === "glovo");
     const tJe = pedidos.filter((p) => p.tipo === "just_eat");
+    const tUe = pedidos.filter((p) => p.tipo === "uber_eats");
     const envios = pedidos.reduce((s, p) => s + Number(p.envio || 0), 0);
     return {
       total: sum(pedidos),
@@ -165,12 +171,14 @@ function CierrePage() {
       tarjeta: sum(ta),
       glovo: sum(gl),
       just_eat: sum(je),
+      uber_eats: sum(ue),
       sinMetodo: sum(sin),
       sinMetodoN: sin.length,
       local: { total: sum(local), n: local.length },
       domicilio: { total: sum(dom), n: dom.length },
       tipoGlovo: { total: sum(tGl), n: tGl.length },
       tipoJustEat: { total: sum(tJe), n: tJe.length },
+      tipoUberEats: { total: sum(tUe), n: tUe.length },
       envios,
     };
   }, [pedidos]);
@@ -185,7 +193,8 @@ function CierrePage() {
     const efectivo = sumBy("efectivo");
     printHTML(cierreHTML({
       fecha,
-      efectivo, tarjeta: sumBy("tarjeta"), glovo: sumBy("glovo"), just_eat: sumBy("just_eat"),
+      efectivo, tarjeta: sumBy("tarjeta"), glovo: sumBy("glovo"),
+      just_eat: sumBy("just_eat"), uber_eats: sumBy("uber_eats"),
       envios: validos.reduce((s, p) => s + Number(p.envio || 0), 0),
       descuentos: 0, ajustes: 0,
       anulados: sum(anulados), anuladosN: anulados.length,
@@ -193,6 +202,46 @@ function CierrePage() {
       total: sum(validos), pedidos: validos.length,
       cajaTeorica: efectivo,
     }), `Cierre ${fecha}`);
+  };
+
+  // ===== TURNOS =====
+  const turnoActivo = useTurnoActivo();
+  const [showIniciar, setShowIniciar] = useState(false);
+  const [resumenCierre, setResumenCierre] = useState<{ resumen: ResumenTurno; inicio: string; fin: string; turno: TurnoNombre } | null>(null);
+  const historial = getHistorialTurnos();
+
+  const calcularResumenTurno = (): ResumenTurno => {
+    const inicio = turnoActivo ? new Date(turnoActivo.inicio).getTime() : 0;
+    const desde = pedidos.filter((p) => new Date(p.created_at).getTime() >= inicio);
+    const sum = (arr: typeof pedidos) => arr.reduce((s, p) => s + Number(p.total), 0);
+    const sumBy = (k: string) => sum(desde.filter((p) => p.metodo_pago === k));
+    return {
+      pedidos: desde.length,
+      total: sum(desde),
+      efectivo: sumBy("efectivo"),
+      tarjeta: sumBy("tarjeta"),
+      glovo: sumBy("glovo"),
+      just_eat: sumBy("just_eat"),
+      uber_eats: sumBy("uber_eats"),
+      envios: desde.reduce((s, p) => s + Number(p.envio || 0), 0),
+    };
+  };
+
+  const onIniciar = (t: TurnoNombre) => {
+    iniciarTurno(t);
+    setShowIniciar(false);
+    toast.success(`▶ Turno ${turnoLabel(t)} iniciado`);
+  };
+
+  const onCerrar = () => {
+    if (!turnoActivo) return;
+    if (!confirm(`¿Cerrar turno ${turnoLabel(turnoActivo.turno)}?`)) return;
+    const resumen = calcularResumenTurno();
+    const c = cerrarTurnoActivo(resumen);
+    if (c) {
+      setResumenCierre({ resumen, inicio: c.inicio, fin: c.fin, turno: c.turno });
+      toast.success("⏹ Turno cerrado y archivado");
+    }
   };
 
   return (
@@ -218,6 +267,46 @@ function CierrePage() {
           </div>
         </div>
 
+        {/* TURNOS */}
+        <section className="no-print rounded-3xl bg-card p-4 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="text-xs font-bold uppercase text-muted-foreground">Turno</div>
+              {turnoActivo ? (
+                <div className="text-lg font-black">
+                  🟢 {turnoLabel(turnoActivo.turno)}
+                  <span className="ml-2 text-sm font-normal text-muted-foreground">
+                    Inicio: {new Date(turnoActivo.inicio).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                </div>
+              ) : (
+                <div className="text-lg font-black text-muted-foreground">⚪ Sin turno activo</div>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setShowIniciar(true)}
+                disabled={!!turnoActivo}
+                className="flex items-center gap-2 rounded-2xl bg-success px-4 py-3 text-sm font-black text-success-foreground shadow active:scale-95 disabled:opacity-40"
+              >
+                <Play className="h-4 w-4" /> Iniciar turno
+              </button>
+              <button
+                onClick={onCerrar}
+                disabled={!turnoActivo}
+                className="flex items-center gap-2 rounded-2xl bg-destructive px-4 py-3 text-sm font-black text-destructive-foreground shadow active:scale-95 disabled:opacity-40"
+              >
+                <Square className="h-4 w-4" /> Cerrar turno
+              </button>
+            </div>
+          </div>
+          {historial.length > 0 && (
+            <div className="mt-3 text-xs text-muted-foreground">
+              Último cierre: {turnoLabel(historial[0].turno)} · {new Date(historial[0].fin).toLocaleString("es-ES")} · {eur(historial[0].resumen.total)}
+            </div>
+          )}
+        </section>
+
         {/* TOTAL */}
         <div className="rounded-3xl bg-primary p-6 text-center text-primary-foreground shadow-lg">
           <div className="text-sm opacity-80">Total del día · {fecha}</div>
@@ -228,11 +317,12 @@ function CierrePage() {
         {/* Por método de pago */}
         <section className="rounded-3xl bg-card p-5 shadow-sm">
           <h2 className="mb-3 text-lg font-black">Por método de pago</h2>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
             <Card icon={<Banknote className="h-5 w-5" />} label="Efectivo" v={stats.efectivo} />
             <Card icon={<CreditCard className="h-5 w-5" />} label="Tarjeta" v={stats.tarjeta} />
             <Card icon={<Bike className="h-5 w-5" />} label="Glovo" v={stats.glovo} />
             <Card icon={<Bike className="h-5 w-5" />} label="Just Eat" v={stats.just_eat} />
+            <Card icon={<span>🛵</span>} label="Uber Eats" v={stats.uber_eats} />
           </div>
           {stats.sinMetodoN > 0 && (
             <div className="mt-3 rounded-xl bg-destructive/10 p-3 text-sm text-destructive">
@@ -242,18 +332,19 @@ function CierrePage() {
           <div className="mt-3 rounded-2xl bg-muted p-3 text-sm">
             <div className="flex justify-between"><span>💵 Caja física (efectivo)</span><span className="font-black">{eur(stats.efectivo)}</span></div>
             <div className="flex justify-between"><span>💳 Banco (tarjeta)</span><span className="font-black">{eur(stats.tarjeta)}</span></div>
-            <div className="flex justify-between"><span>🛵 Plataformas (Glovo + Just Eat)</span><span className="font-black">{eur(stats.glovo + stats.just_eat)}</span></div>
+            <div className="flex justify-between"><span>🛵 Plataformas (Glovo + Just Eat + Uber Eats)</span><span className="font-black">{eur(stats.glovo + stats.just_eat + stats.uber_eats)}</span></div>
           </div>
         </section>
 
         {/* Por tipo */}
         <section className="rounded-3xl bg-card p-5 shadow-sm">
           <h2 className="mb-3 text-lg font-black">Por tipo de pedido</h2>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
             <Card icon={<Home className="h-5 w-5" />} label={`Local (${stats.local.n})`} v={stats.local.total} />
             <Card icon={<Bike className="h-5 w-5" />} label={`Domicilio (${stats.domicilio.n})`} v={stats.domicilio.total} />
             <Card icon={<Bike className="h-5 w-5" />} label={`Glovo (${stats.tipoGlovo.n})`} v={stats.tipoGlovo.total} />
             <Card icon={<Bike className="h-5 w-5" />} label={`Just Eat (${stats.tipoJustEat.n})`} v={stats.tipoJustEat.total} />
+            <Card icon={<span>🛵</span>} label={`Uber Eats (${stats.tipoUberEats.n})`} v={stats.tipoUberEats.total} />
           </div>
         </section>
 
@@ -408,8 +499,53 @@ function CierrePage() {
           )}
         </section>
       </div>
+
+      {/* Modal: Iniciar turno */}
+      {showIniciar && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={() => setShowIniciar(false)}>
+          <div className="w-full max-w-sm rounded-3xl bg-card p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="mb-4 text-xl font-black">▶ Iniciar turno</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <button onClick={() => onIniciar("tarde")} className="rounded-2xl bg-primary p-6 text-lg font-black text-primary-foreground active:scale-95">🌅 TARDE</button>
+              <button onClick={() => onIniciar("noche")} className="rounded-2xl bg-secondary p-6 text-lg font-black text-secondary-foreground active:scale-95">🌙 NOCHE</button>
+            </div>
+            <button onClick={() => setShowIniciar(false)} className="mt-4 w-full rounded-2xl bg-muted py-3 font-bold active:scale-95">Cancelar</button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Resumen de cierre de turno */}
+      {resumenCierre && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={() => setResumenCierre(null)}>
+          <div className="w-full max-w-md rounded-3xl bg-card p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="mb-1 text-xl font-black">⏹ Cierre de turno {turnoLabel(resumenCierre.turno)}</h3>
+            <div className="mb-4 text-xs text-muted-foreground">
+              {new Date(resumenCierre.inicio).toLocaleTimeString("es-ES")} → {new Date(resumenCierre.fin).toLocaleTimeString("es-ES")}
+              {" · "}{duracionMinutos(resumenCierre.inicio, resumenCierre.fin)} min
+            </div>
+            <div className="space-y-1 rounded-2xl bg-muted p-4 text-sm">
+              <Row label="Pedidos" v={`${resumenCierre.resumen.pedidos}`} />
+              <Row label="Efectivo" v={eur(resumenCierre.resumen.efectivo)} />
+              <Row label="Tarjeta" v={eur(resumenCierre.resumen.tarjeta)} />
+              <Row label="Glovo" v={eur(resumenCierre.resumen.glovo)} />
+              <Row label="Just Eat" v={eur(resumenCierre.resumen.just_eat)} />
+              <Row label="🛵 Uber Eats" v={eur(resumenCierre.resumen.uber_eats)} />
+              <Row label="Envíos" v={eur(resumenCierre.resumen.envios)} />
+              <div className="mt-2 flex items-baseline justify-between border-t border-border pt-2">
+                <span className="font-black">TOTAL</span>
+                <span className="text-2xl font-black text-primary">{eur(resumenCierre.resumen.total)}</span>
+              </div>
+            </div>
+            <button onClick={() => setResumenCierre(null)} className="mt-4 w-full rounded-2xl bg-primary py-3 font-black text-primary-foreground active:scale-95">Cerrar</button>
+          </div>
+        </div>
+      )}
     </div>
   );
+}
+
+function Row({ label, v }: { label: string; v: string }) {
+  return <div className="flex justify-between"><span className="text-muted-foreground">{label}</span><span className="font-bold">{v}</span></div>;
 }
 
 function Card({ icon, label, v }: { icon: React.ReactNode; label: string; v: number }) {
