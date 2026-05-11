@@ -70,10 +70,31 @@ function CajaPage() {
     if (p) setEditando({ producto: p, item });
   };
 
+  const itemsCount = estado.items.reduce((s, i) => s + i.cantidad, 0);
+
   return (
-    <div className="grid h-full grid-cols-1 gap-3 p-3 lg:grid-cols-[1fr_400px]">
+    <div className="flex h-full flex-col gap-2 p-2 sm:p-3 lg:grid lg:grid-cols-[1fr_400px] lg:gap-3">
+      {/* Tabs móvil */}
+      <div className="grid grid-cols-2 gap-2 lg:hidden">
+        <button
+          onClick={() => setTabMovil("menu")}
+          className={`rounded-2xl py-3 text-sm font-black active:scale-95 ${tabMovil === "menu" ? "bg-primary text-primary-foreground shadow" : "bg-muted"}`}
+        >🍔 Menú</button>
+        <button
+          onClick={() => setTabMovil("pedido")}
+          className={`relative rounded-2xl py-3 text-sm font-black active:scale-95 ${tabMovil === "pedido" ? "bg-primary text-primary-foreground shadow" : "bg-muted"}`}
+        >
+          🧾 Pedido
+          {itemsCount > 0 && (
+            <span className="absolute -top-1 -right-1 inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-destructive px-1.5 text-xs font-black text-destructive-foreground">
+              {itemsCount}
+            </span>
+          )}
+        </button>
+      </div>
+
       {/* Izquierda: menú */}
-      <section className="flex flex-col overflow-hidden rounded-3xl bg-card shadow-sm">
+      <section className={`flex flex-col overflow-hidden rounded-3xl bg-card shadow-sm ${tabMovil === "menu" ? "flex" : "hidden"} lg:flex flex-1 min-h-0`}>
         <div className="flex gap-2 overflow-x-auto border-b border-border p-3">
           {categorias.map((c) => (
             <button
