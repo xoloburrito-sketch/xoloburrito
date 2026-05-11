@@ -138,7 +138,7 @@ ${p.notas ? `<div class="t-sep"></div><div>Notas: ${p.notas}</div>` : ""}
 
 export function comandaCocinaHTML(p: { numero: number; tipo: string; created_at: string }, items: ItemTicket[]) {
   return `
-<div class="t-title">COMANDA COCINA</div>
+${logoTag()}
 <div class="t-big">#${p.numero}</div>
 <div class="t-sub">${new Date(p.created_at).toLocaleTimeString("es-ES")} · ${tipoLabel(p.tipo)}</div>
 <div class="t-sep"></div>
