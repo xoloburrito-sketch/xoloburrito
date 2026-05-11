@@ -5,8 +5,12 @@ import { eur } from "@/lib/format";
 import { toast } from "sonner";
 import {
   Banknote, CreditCard, Bike, Home, Calculator, Printer, RefreshCw,
-  Trash2, Pencil, Check, X, Plus, Minus,
+  Trash2, Pencil, Check, X, Plus, Minus, Play, Square,
 } from "lucide-react";
+import {
+  iniciarTurno, cerrarTurnoActivo, useTurnoActivo, turnoLabel,
+  duracionMinutos, getHistorialTurnos, type TurnoNombre, type ResumenTurno,
+} from "@/lib/turnos";
 
 export const Route = createFileRoute("/_app/cierre")({
   component: CierrePage,
@@ -152,11 +156,13 @@ function CierrePage() {
     const ta = pedidos.filter((p) => p.metodo_pago === "tarjeta");
     const gl = pedidos.filter((p) => p.metodo_pago === "glovo");
     const je = pedidos.filter((p) => p.metodo_pago === "just_eat");
+    const ue = pedidos.filter((p) => p.metodo_pago === "uber_eats");
     const sin = pedidos.filter((p) => !p.metodo_pago);
     const local = pedidos.filter((p) => p.tipo === "local");
     const dom = pedidos.filter((p) => p.tipo === "domicilio");
     const tGl = pedidos.filter((p) => p.tipo === "glovo");
     const tJe = pedidos.filter((p) => p.tipo === "just_eat");
+    const tUe = pedidos.filter((p) => p.tipo === "uber_eats");
     const envios = pedidos.reduce((s, p) => s + Number(p.envio || 0), 0);
     return {
       total: sum(pedidos),
@@ -165,12 +171,14 @@ function CierrePage() {
       tarjeta: sum(ta),
       glovo: sum(gl),
       just_eat: sum(je),
+      uber_eats: sum(ue),
       sinMetodo: sum(sin),
       sinMetodoN: sin.length,
       local: { total: sum(local), n: local.length },
       domicilio: { total: sum(dom), n: dom.length },
       tipoGlovo: { total: sum(tGl), n: tGl.length },
       tipoJustEat: { total: sum(tJe), n: tJe.length },
+      tipoUberEats: { total: sum(tUe), n: tUe.length },
       envios,
     };
   }, [pedidos]);
@@ -185,7 +193,8 @@ function CierrePage() {
     const efectivo = sumBy("efectivo");
     printHTML(cierreHTML({
       fecha,
-      efectivo, tarjeta: sumBy("tarjeta"), glovo: sumBy("glovo"), just_eat: sumBy("just_eat"),
+      efectivo, tarjeta: sumBy("tarjeta"), glovo: sumBy("glovo"),
+      just_eat: sumBy("just_eat"), uber_eats: sumBy("uber_eats"),
       envios: validos.reduce((s, p) => s + Number(p.envio || 0), 0),
       descuentos: 0, ajustes: 0,
       anulados: sum(anulados), anuladosN: anulados.length,
@@ -193,6 +202,46 @@ function CierrePage() {
       total: sum(validos), pedidos: validos.length,
       cajaTeorica: efectivo,
     }), `Cierre ${fecha}`);
+  };
+
+  // ===== TURNOS =====
+  const turnoActivo = useTurnoActivo();
+  const [showIniciar, setShowIniciar] = useState(false);
+  const [resumenCierre, setResumenCierre] = useState<{ resumen: ResumenTurno; inicio: string; fin: string; turno: TurnoNombre } | null>(null);
+  const historial = getHistorialTurnos();
+
+  const calcularResumenTurno = (): ResumenTurno => {
+    const inicio = turnoActivo ? new Date(turnoActivo.inicio).getTime() : 0;
+    const desde = pedidos.filter((p) => new Date(p.created_at).getTime() >= inicio);
+    const sum = (arr: typeof pedidos) => arr.reduce((s, p) => s + Number(p.total), 0);
+    const sumBy = (k: string) => sum(desde.filter((p) => p.metodo_pago === k));
+    return {
+      pedidos: desde.length,
+      total: sum(desde),
+      efectivo: sumBy("efectivo"),
+      tarjeta: sumBy("tarjeta"),
+      glovo: sumBy("glovo"),
+      just_eat: sumBy("just_eat"),
+      uber_eats: sumBy("uber_eats"),
+      envios: desde.reduce((s, p) => s + Number(p.envio || 0), 0),
+    };
+  };
+
+  const onIniciar = (t: TurnoNombre) => {
+    iniciarTurno(t);
+    setShowIniciar(false);
+    toast.success(`▶ Turno ${turnoLabel(t)} iniciado`);
+  };
+
+  const onCerrar = () => {
+    if (!turnoActivo) return;
+    if (!confirm(`¿Cerrar turno ${turnoLabel(turnoActivo.turno)}?`)) return;
+    const resumen = calcularResumenTurno();
+    const c = cerrarTurnoActivo(resumen);
+    if (c) {
+      setResumenCierre({ resumen, inicio: c.inicio, fin: c.fin, turno: c.turno });
+      toast.success("⏹ Turno cerrado y archivado");
+    }
   };
 
   return (
