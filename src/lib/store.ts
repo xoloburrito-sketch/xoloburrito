@@ -87,7 +87,8 @@ export const store = {
     store.setPedidos(store.getPedidos().map((x) => (x.id === id ? { ...x, ...cambios } : x)));
   },
   getPedidosHoy: (): Pedido[] => {
-    const hoy = new Date().toISOString().slice(0, 10);
+    const d = new Date();
+    const hoy = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
     return store.getPedidos().filter((p) => typeof p.fecha === "string" && p.fecha.slice(0, 10) === hoy);
   },
   getPedidosHoyTurno: (): Pedido[] => {
