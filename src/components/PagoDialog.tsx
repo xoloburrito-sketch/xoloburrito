@@ -371,9 +371,9 @@ body{font-family:'Consolas','Lucida Console','Courier New',monospace;font-size:1
           <button
             onClick={confirmar}
             disabled={confirmando}
-            className="w-full rounded-2xl bg-success py-5 text-xl font-black text-success-foreground shadow-lg transition active:scale-95 disabled:opacity-50"
+            className="w-full rounded-2xl bg-success py-5 font-black text-success-foreground shadow-lg transition active:scale-95 font-mono text-5xl text-center opacity-100"
           >
-            {confirmando ? "Procesando…" : `✓ Confirmar · ${eur(total)}`}
+            {confirmando ? "Procesando…" : " Confirmar "}
           </button>
         </div>
       </div>
