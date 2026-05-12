@@ -39,9 +39,26 @@ function EstadisticasPage() {
       const d = (c.fin || c.inicio).slice(0, 10);
       porDia.set(d, (porDia.get(d) || 0) + (c.resumen.total || 0));
     }
+    const generarUltimosDias = (n: number) => {
+      const out: { fecha: string; label: string; total: number }[] = [];
+      for (let i = n - 1; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, "0");
+        const dd = String(d.getDate()).padStart(2, "0");
+        const fecha = `${y}-${m}-${dd}`;
+        out.push({
+          fecha: `${dd}/${m}`,
+          label: `${dd}/${m}`,
+          total: Math.round(((porDia.get(fecha) || 0)) * 100) / 100,
+        });
+      }
+      return out;
+    };
+    const last14 = generarUltimosDias(14);
+    const last30 = generarUltimosDias(30);
     const dias = [...porDia.entries()].sort(([a], [b]) => a.localeCompare(b));
-    const last14 = dias.slice(-14).map(([fecha, total]) => ({ fecha: fecha.slice(5), total: Math.round(total * 100) / 100 }));
-    const last30 = dias.slice(-30).map(([fecha, total]) => ({ fecha: fecha.slice(5), total: Math.round(total * 100) / 100 }));
     const mejorDia = [...dias].sort((a, b) => b[1] - a[1])[0];
 
     // Top productos
@@ -143,13 +160,26 @@ function EstadisticasPage() {
         {/* Gráfico ventas por día */}
         <section className="rounded-3xl bg-card p-5 shadow-sm">
           <h2 className="mb-3 text-lg font-black">Ventas últimos 14 días</h2>
-          <div className="h-64">
+          <div style={{ width: "100%", height: 240 }}>
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={stats!.last14}>
-                <XAxis dataKey="fecha" stroke="currentColor" fontSize={12} />
-                <YAxis stroke="currentColor" fontSize={12} />
-                <Tooltip />
-                <Bar dataKey="total" fill="#22c55e" radius={[6, 6, 0, 0]} />
+              <BarChart data={stats!.last14} margin={{ top: 8, right: 8, left: 0, bottom: 8 }}>
+                <XAxis
+                  dataKey="label"
+                  stroke="currentColor"
+                  tick={{ fontSize: 11 }}
+                  interval={0}
+                  angle={-30}
+                  textAnchor="end"
+                  height={48}
+                />
+                <YAxis
+                  stroke="currentColor"
+                  tick={{ fontSize: 11 }}
+                  width={48}
+                  tickFormatter={(v: number) => `${Math.round(v)}€`}
+                />
+                <Tooltip formatter={(v: number) => `${v.toFixed(2)}€`} />
+                <Bar dataKey="total" fill="#22c55e" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
