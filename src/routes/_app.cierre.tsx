@@ -45,7 +45,7 @@ const lineaTotal = (i: Item) => {
 };
 
 function CierrePage() {
-  const [fecha, setFecha] = useState<string>(hoyISO());
+  const [fecha, setFecha] = useState<string>("");
   const [ahora, setAhora] = useState<Date>(new Date());
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [loading, setLoading] = useState(false);
@@ -54,9 +54,11 @@ function CierrePage() {
   const [editTotal, setEditTotal] = useState<{ id: string; valor: string } | null>(null);
   const [editPrecio, setEditPrecio] = useState<{ id: string; valor: string } | null>(null);
 
-  // Reloj y fecha en vivo: actualiza cada minuto y al recibir foco
+  // Reloj y fecha en vivo: se inicializa en cliente (evita desfase UTC del SSR),
+  // refresca al montar, cada minuto y al recibir foco.
   useEffect(() => {
     const tick = () => { setAhora(new Date()); setFecha(hoyISO()); };
+    tick();
     const id = setInterval(tick, 60_000);
     const onFocus = () => tick();
     window.addEventListener("focus", onFocus);
@@ -64,6 +66,7 @@ function CierrePage() {
   }, []);
 
   const cargar = useCallback(async (f: string) => {
+    if (!f) return;
     setLoading(true);
     const desde = new Date(f + "T00:00:00").toISOString();
     const hasta = new Date(f + "T23:59:59.999").toISOString();
@@ -77,7 +80,7 @@ function CierrePage() {
     setLoading(false);
   }, []);
 
-  useEffect(() => { cargar(fecha); }, [fecha, cargar]);
+  useEffect(() => { if (fecha) cargar(fecha); }, [fecha, cargar]);
 
   const cargarItems = async (pedidoId: string) => {
     const { data } = await supabase.from("items_pedido").select("*").eq("pedido_id", pedidoId);
