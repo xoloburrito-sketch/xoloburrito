@@ -320,9 +320,9 @@ function CierrePage() {
               className="rounded-xl border border-border bg-card px-3 py-2 text-sm font-bold"
             />
             <button onClick={() => cargar(fecha)} className="rounded-xl bg-muted p-2 active:scale-95">
-              <RefreshCw className="h-4 w-4" />
+            <RefreshCw className="h-4 w-4" />
             </button>
-            <button onClick={imprimir} className="flex items-center gap-1 rounded-xl bg-primary px-3 py-2 text-sm font-bold text-primary-foreground active:scale-95">
+            <button onClick={imprimir} className="rounded-xl border border-border bg-card px-3 py-2 font-bold text-3xl">
               <Printer className="h-4 w-4" /> Imprimir
             </button>
           </div>
