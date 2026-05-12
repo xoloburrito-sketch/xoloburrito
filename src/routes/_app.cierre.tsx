@@ -11,6 +11,7 @@ import {
   iniciarTurno, cerrarTurnoActivo, useTurnoActivo, turnoLabel,
   duracionMinutos, getHistorialTurnos, type TurnoNombre, type ResumenTurno,
 } from "@/lib/turnos";
+import { fechaHoyLocal } from "@/lib/dates";
 
 export const Route = createFileRoute("/_app/cierre")({
   component: CierrePage,
@@ -36,13 +37,7 @@ type Item = {
   modificaciones: { quitar?: string[]; extras?: { nombre: string; precio: number }[]; notas?: string };
 };
 
-const hoyISO = () => {
-  const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${dd}`;
-};
+const hoyISO = () => fechaHoyLocal();
 
 const lineaTotal = (i: Item) => {
   const ex = (i.modificaciones?.extras || []).reduce((s, e) => s + Number(e.precio), 0);

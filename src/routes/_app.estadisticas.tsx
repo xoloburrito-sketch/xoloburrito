@@ -265,7 +265,7 @@ function EstadisticasPage() {
               <thead><tr className="text-left text-xs text-muted-foreground"><th>Fecha</th><th>Turno</th><th>Inicio</th><th>Fin</th><th className="text-right">Total</th></tr></thead>
               <tbody>
                 {hist.map((c, i) => (
-                  <tr key={i} className="cursor-pointer border-t border-border hover:bg-muted" onClick={() => setDetalle(c)}>
+                  <tr key={`${c.inicio}-${c.fin}-${i}`} className="cursor-pointer border-t border-border hover:bg-muted" onClick={() => setDetalle(c)}>
                     <td className="py-2">{(c.fin || c.inicio).slice(0, 10)}</td>
                     <td className="font-bold">{turnoLabel(c.turno)}</td>
                     <td>{new Date(c.inicio).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}</td>
