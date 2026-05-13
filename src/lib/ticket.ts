@@ -113,32 +113,14 @@ export async function printTicket3Copias(opts: { ticketInner: string; comandaInn
     enviarLAN("cocina", opts.comandaInner).catch(() => 0),
   ]);
 
-  // 2) Fallback por sistema: separa CLIENTE+NEGOCIO de COCINA en 2 trabajos
-  //    Esto permite elegir impresora distinta en cada diálogo de impresión.
-  const ticketsBody: string[] = [];
-  if (nCli === 0) ticketsBody.push(`<div class="copia"><div class="copia-h">COPIA CLIENTE</div>${opts.ticketInner}</div>`);
-  if (nNeg === 0) ticketsBody.push(`<div class="copia"><div class="copia-h">COPIA NEGOCIO</div>${opts.ticketInner}</div>`);
+  // 2) Fallback por sistema: las 3 copias en UN único trabajo de impresión
+  const partes: string[] = [];
+  if (nCli === 0) partes.push(`<div class="copia"><div class="copia-h">COPIA CLIENTE</div>${opts.ticketInner}</div>`);
+  if (nNeg === 0) partes.push(`<div class="copia"><div class="copia-h">COPIA NEGOCIO</div>${opts.ticketInner}</div>`);
+  if (nCoc === 0) partes.push(`<div class="copia cocina"><div class="copia-h">📋 COMANDA COCINA</div>${opts.comandaInner}</div>`);
 
-  const cocinaBody = nCoc === 0
-    ? `<div class="copia cocina"><div class="copia-h">📋 COMANDA COCINA</div>${opts.comandaInner}</div>`
-    : "";
-
-  const title = opts.title || "Ticket";
-  let okAny = false;
-
-  if (ticketsBody.length > 0) {
-    const ok1 = await printSystem(ticketsBody.join(""), `${title} · Cliente/Negocio`, 300);
-    okAny = okAny || ok1;
-  }
-  if (cocinaBody) {
-    // pequeño retardo para que el primer diálogo no bloquee al segundo
-    await new Promise((r) => setTimeout(r, 600));
-    const ok2 = await printSystem(cocinaBody, `${title} · Cocina`, 300);
-    okAny = okAny || ok2;
-  }
-
-  // Si todo se mandó por LAN no hace falta diálogo
-  return okAny || (nCli + nNeg + nCoc) > 0;
+  if (partes.length === 0) return true; // todo enviado por LAN
+  return await printSystem(partes.join(""), opts.title || "Ticket", 300);
 }
 
 type Mod = { quitar?: string[]; extras?: { nombre: string; precio: number }[]; notas?: string };
