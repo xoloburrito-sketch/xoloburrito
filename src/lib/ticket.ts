@@ -69,39 +69,76 @@ async function enviarLAN(rol: "cliente" | "cocina" | "negocio", html: string): P
   return n;
 }
 
-/** Imprime 3 copias automáticas en una sola llamada: Cliente, Negocio, Cocina. */
-export function printTicket3Copias(opts: { ticketInner: string; comandaInner: string; title?: string }) {
-  // 1) intentar enviar por LAN según roles configurados
-  enviarLAN("cliente", opts.ticketInner).catch(() => {});
-  enviarLAN("negocio", opts.ticketInner).catch(() => {});
-  enviarLAN("cocina", opts.comandaInner).catch(() => {});
+/** Imprime un HTML por el sistema en un iframe oculto. Devuelve una promesa que resuelve cuando se ha llamado a print(). */
+function printSystem(innerBody: string, title: string, delay = 350): Promise<boolean> {
+  return new Promise((resolve) => {
+    try {
+      const html = `<!doctype html><html><head><meta charset="utf-8"><title>${title}</title><style>${TICKET_CSS}${COPIAS_CSS}</style></head><body>${innerBody}</body></html>`;
+      const iframe = document.createElement("iframe");
+      iframe.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0";
+      document.body.appendChild(iframe);
+      const doc = iframe.contentDocument || iframe.contentWindow?.document;
+      if (!doc) { document.body.removeChild(iframe); resolve(false); return; }
+      doc.open(); doc.write(html); doc.close();
+      setTimeout(() => {
+        try {
+          iframe.contentWindow?.focus();
+          iframe.contentWindow?.print();
+          resolve(true);
+        } catch (e) { console.error("print error", e); resolve(false); }
+        setTimeout(() => { try { document.body.removeChild(iframe); } catch { /* noop */ } }, 3000);
+      }, delay);
+    } catch (e) {
+      console.error("printSystem", e);
+      resolve(false);
+    }
+  });
+}
 
-  // 2) fallback siempre: imprimir por sistema (3 copias en un solo job)
-  const body = `
-    <div class="copia"><div class="copia-h">COPIA CLIENTE</div>${opts.ticketInner}</div>
-    <div class="copia"><div class="copia-h">COPIA NEGOCIO</div>${opts.ticketInner}</div>
-    <div class="copia cocina"><div class="copia-h">📋 COMANDA COCINA</div>${opts.comandaInner}</div>
-  `;
-  const html = `<!doctype html><html><head><meta charset="utf-8"><title>${opts.title || "Ticket"}</title><style>${TICKET_CSS}${COPIAS_CSS}</style></head><body>${body}</body></html>`;
-  try {
-    const iframe = document.createElement("iframe");
-    iframe.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0";
-    document.body.appendChild(iframe);
-    const doc = iframe.contentDocument || iframe.contentWindow?.document;
-    if (!doc) { document.body.removeChild(iframe); return false; }
-    doc.open(); doc.write(html); doc.close();
-    setTimeout(() => {
-      try {
-        iframe.contentWindow?.focus();
-        iframe.contentWindow?.print();
-      } catch (e) { console.error("print error", e); }
-      setTimeout(() => { try { document.body.removeChild(iframe); } catch { /* noop */ } }, 2000);
-    }, 350);
-    return true;
-  } catch (e) {
-    console.error("printTicket3Copias", e);
-    return false;
+/**
+ * Imprime las 3 copias en DOS trabajos separados para poder elegir impresoras distintas:
+ *  - Trabajo 1: Cliente + Negocio (→ p.ej. AvPos T40TC)
+ *  - Trabajo 2: Comanda cocina (→ p.ej. Qian 80 QOP-T80BL-RI)
+ * Cada trabajo abre su propio diálogo de impresión, así puedes seleccionar
+ * una impresora distinta como predeterminada en cada uno.
+ *
+ * Si hay impresoras LAN configuradas, se envían por red en paralelo
+ * y se omite del sistema la copia que ya se mandó por LAN.
+ */
+export async function printTicket3Copias(opts: { ticketInner: string; comandaInner: string; title?: string }) {
+  // 1) Envío por LAN según roles configurados (no bloquea)
+  const [nCli, nNeg, nCoc] = await Promise.all([
+    enviarLAN("cliente", opts.ticketInner).catch(() => 0),
+    enviarLAN("negocio", opts.ticketInner).catch(() => 0),
+    enviarLAN("cocina", opts.comandaInner).catch(() => 0),
+  ]);
+
+  // 2) Fallback por sistema: separa CLIENTE+NEGOCIO de COCINA en 2 trabajos
+  //    Esto permite elegir impresora distinta en cada diálogo de impresión.
+  const ticketsBody: string[] = [];
+  if (nCli === 0) ticketsBody.push(`<div class="copia"><div class="copia-h">COPIA CLIENTE</div>${opts.ticketInner}</div>`);
+  if (nNeg === 0) ticketsBody.push(`<div class="copia"><div class="copia-h">COPIA NEGOCIO</div>${opts.ticketInner}</div>`);
+
+  const cocinaBody = nCoc === 0
+    ? `<div class="copia cocina"><div class="copia-h">📋 COMANDA COCINA</div>${opts.comandaInner}</div>`
+    : "";
+
+  const title = opts.title || "Ticket";
+  let okAny = false;
+
+  if (ticketsBody.length > 0) {
+    const ok1 = await printSystem(ticketsBody.join(""), `${title} · Cliente/Negocio`, 300);
+    okAny = okAny || ok1;
   }
+  if (cocinaBody) {
+    // pequeño retardo para que el primer diálogo no bloquee al segundo
+    await new Promise((r) => setTimeout(r, 600));
+    const ok2 = await printSystem(cocinaBody, `${title} · Cocina`, 300);
+    okAny = okAny || ok2;
+  }
+
+  // Si todo se mandó por LAN no hace falta diálogo
+  return okAny || (nCli + nNeg + nCoc) > 0;
 }
 
 type Mod = { quitar?: string[]; extras?: { nombre: string; precio: number }[]; notas?: string };
