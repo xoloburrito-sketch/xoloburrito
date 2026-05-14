@@ -139,9 +139,8 @@ export function PagoDialog({
     }
   };
 
-  const imprimir = () => {
+  const imprimir = async () => {
     if (!pedidoOk) return;
-    const inner = ticketRef.current?.innerHTML || "";
     const cli = estado.cliente_nombre ? {
       nombre: estado.cliente_nombre,
       telefono: estado.cliente_telefono || "",
@@ -154,8 +153,21 @@ export function PagoDialog({
       nombre: i.nombre, cantidad: i.cantidad, precio_unitario: i.precio_unitario,
       modificaciones: i.modificaciones,
     }));
+    const inner = ticketHTML({
+      numero: pedidoOk.numero,
+      created_at: pedidoOk.fecha,
+      tipo: estado.tipo,
+      metodo_pago: metodo,
+      subtotal: Number(totalProductos) || 0,
+      envio: Number(envio) || 0,
+      total: Number(total) || 0,
+      recibido: metodo === "efectivo" ? recibidoNum : total,
+      cambio: metodo === "efectivo" ? cambio : 0,
+      cliente: cli,
+      notas: estado.notas || null,
+    }, itemsT);
     const comanda = comandaCocinaHTML({ numero: pedidoOk.numero, tipo: estado.tipo, created_at: pedidoOk.fecha }, itemsT);
-    const ok = printTicket3Copias({ ticketInner: inner, comandaInner: comanda, title: `Ticket #${pedidoOk.numero}` });
+    const ok = await printTicket3Copias({ ticketInner: inner, comandaInner: comanda, title: `Ticket #${pedidoOk.numero}` });
     if (!ok) toast.error("⚠️ No se pudo abrir el diálogo de impresión");
     else toast.success("✅ 3 copias enviadas a la impresora");
   };
